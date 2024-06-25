@@ -1,0 +1,56 @@
+import uuid
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User,AbstractUser, Group, Permission
+
+
+class User(AbstractUser):
+    ROLE_TYPES = (
+        ('ADMIN', 'ADMIN'),
+        ('EMPLOYEE', 'EMPLOYEE'),
+    )
+
+    role = models.CharField(max_length=10, choices=ROLE_TYPES)
+
+    groups = models.ManyToManyField(
+        Group,
+        related_name='custom_user_groups'  # Change related_name to avoid clashes
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='custom_user_permissions'  # Change related_name to avoid clashes
+    )
+
+    def __str__(self):
+        return self.username
+    
+class Base(models.Model):
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='%(class)s_created_by',
+        null = True
+    )
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='%(class)s_updated_by',
+        blank=True,
+        null=True
+    )
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Department(Base):
+    department_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    department_name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
+    
+
+    

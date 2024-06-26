@@ -51,6 +51,33 @@ class Department(Base):
     department_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return str(self.department_name) 
+
+class Designation(Base):
+    designation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
+    department = models.ForeignKey('master.Department', max_length=250, null=True, blank=True, related_name='designation_dep',
+                             on_delete=models.SET_NULL)
+    designation_name = models.CharField(max_length=50, null=True, blank=False)
+    
+    description = models.TextField(blank=True, null=True)
+    
+
+
+    def __str__(self):
+        return str(self.designation_name) 
+    
+class Location(Base):
+    location_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    location_name = models.CharField(max_length=50, null=True, blank=False)
+    
+    description = models.TextField(blank=True, null=True)
+    
+
+
+    def __str__(self):
+        return str(self.location_name) 
 
     

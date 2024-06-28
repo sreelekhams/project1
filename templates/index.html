@@ -32,6 +32,14 @@
     <!-- dataTable Responsive -->
     <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/css/responsive.dataTables.min.css' %}" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
+    <script src="{% static 'bootstrap/js/jquery-ui.js' %}"></script>
+
   </head>
 
   <body>
@@ -131,7 +139,7 @@
                 <hr class="dropdown-divider" />
               </li>
               <li>
-                <a class="dropdown-item d-flex align-items-center" href="#">
+                <a class="dropdown-item d-flex align-items-center" href="{% url 'admin_logout' %}">
                   <i class="bi bi-box-arrow-right"></i> <span>Sign Out</span>
                 </a>
               </li>
@@ -181,6 +189,31 @@
                 <i class="bi bi-circle"></i><span>Location</span>
               </a>
             </li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link collapsed"
+            data-bs-target="#master-nav"
+            data-bs-toggle="collapse"
+            href="#"
+          >
+            <i class="bi bi-menu-button-wide"></i> <span>Employee</span
+            ><i class="bi bi-chevron-down ms-auto"></i>
+          </a>
+
+          <ul
+            id="master-nav"
+            class="nav-content collapse"
+            data-bs-parent="#sidebar-nav"
+          >
+
+            <li>
+              <a href="{% url 'employee_list' %}">
+                <i class="bi bi-circle"></i><span>Employee</span>
+              </a>
+            </li>
+           
           </ul>
         </li>
         <!-- Masters nav-iems ends here-->

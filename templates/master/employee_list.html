@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <main id="main" class="main">
+        <div class="pagetitle">
+          <h1>Employee</h1>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="../index.html">Home</a></li>
+              <li class="breadcrumb-item">Master</li>
+              <li class="breadcrumb-item active">Employee List</li>
+            </ol>
+          </nav>
+        </div>
+        <section class="section">
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card border border-primary">
+                <div class="card-body">
+                  <div class="card-title">
+                    <div class="d-lg-flex">
+                      <div>
+                        <h5 class="card-heading">List Of Employee</h5>
+                      </div>
+                      <div class="ms-auto my-auto mt-lg-0 mt-4">
+                        <div class="ms-auto my-auto">
+                          <a href="{% url 'employee_add' %}">
+                            <button type="button" class="btn btn-success">
+                              <i class="bi bi-plus-circle me-1"></i> Add Employee
+                             
+                            </button>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <table
+                    class="display responsive"
+                    style="width: 100%"
+                    id="myTable"
+                  >
+                    <thead>
+                      <tr>
+                        <th scope="col" class="text-md dt-nowrap">Sl.No</th>
+                        <th scope="col" class="text-md dt-nowrap">Actions</th>
+                        <th scope="col" class="text-md dt-nowrap">Join_date </th>
+                        <th scope="col" class="text-md dt-nowrap">Employee No</th>
+                        <th scope="col" class="text-md dt-nowrap">Name</th>
+                        <th scope="col" class="text-md dt-nowrap">Photo</th>
+                        <th scope="col" class="text-md dt-nowrap">Phone</th>
+                        <th scope="col" class="text-md dt-nowrap">Address</th>
+                        <th scope="col" class="text-md dt-nowrap">Start Date</th>
+                        <th scope="col" class="text-md dt-nowrap">End Date</th>
+                        <th scope="col" class="text-md dt-nowrap">Department</th>
+                        <th scope="col" class="text-md dt-nowrap">Designation</th>
+                        <th scope="col" class="text-md dt-nowrap">Location</th>
+                       
+                      </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                      <tr>
+                        <th scope="row">{{ forloop.counter }}</th>
+                        <td
+                          class="justify-content-center align-content-center"
+                          style="min-height: 100% !important; min-width: 100%"
+                        >
+                          <div class="d-flex">
+                            <a href="{% url 'employee_edit' employee.employee_id %}">
+                              <button
+                                type="button"
+                                class="btn btn-outline-info"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Edit"
+                              >
+                                <i class="bi bi-pencil-fill"></i>
+                              </button> </a
+                            >&nbsp;
+                            <a href="project-allocation-view.html">
+                              <button
+                                type="button"
+                                class="btn btn-outline-success"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Details"
+                              >
+                                <i class="bi bi-eye-fill"></i>
+                              </button> </a
+                            >&nbsp;
+                            <a href="">
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteModal"
+                              title="Delete"
+                            >
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                            &nbsp;
+  
+                          </div>
+                        </td>
+                        <td class="dt-nowrap">{{ employee.join_date }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_no }}</td>
+                        <td class="dt-nowrap">{{ employee.name }}</td>
+                        <td style="text-align:center;">
+                          {% if employee.photo %}
+                              <img src="{{ employee.photo.url }}" alt="Employee Photo" style="max-height: 100px;">
+                          {% else %}
+                              No Photo
+                          {% endif %}
+                      </td>
+                        <td class="dt-nowrap">{{ employee.phone }}</td>
+                        <td class="dt-nowrap">{{ employee.address }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_start_date }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_end_date }}</td>
+                        <td class="dt-nowrap">{{ employee.department_name }}</td>
+                        <td class="dt-nowrap">{{ employee.designation_name }}</td>
+                        <td class="dt-nowrap">{{ employee.location_name }}</td>
+                        
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <div class="spacex mb-5"></div>
+      </main>
+     
+</body>
+</html>
+{% endblock %}

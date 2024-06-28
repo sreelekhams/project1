@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <main id="main" class="main">
+        <div class="pagetitle">
+          <h1>Employee</h1>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="../index.html">Home</a></li>
+              <li class="breadcrumb-item">Master</li>
+              <li class="breadcrumb-item active">Employee Details</li>
+            </ol>
+          </nav>
+        </div>
+        <section class="section">
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card border border-primary">
+                <div class="card-body">
+                  <div class="card-title">
+                    <div class="d-lg-flex">
+                      <div>
+                        <h5 class="card-heading">Detail Of Employee</h5>
+                      </div>
+                      <div class="ms-auto my-auto mt-lg-0 mt-4">
+                       
+                      </div>
+                    </div>
+                  </div>
+                  <table
+                    class="display responsive"
+                    style="width: 100%"
+                    id="myTable"
+                  >
+                    <thead>
+                      <tr>
+                      
+                       
+                        <th scope="col" class="text-md dt-nowrap">Join_date </th>
+                        <th scope="col" class="text-md dt-nowrap">Employee No</th>
+                        <th scope="col" class="text-md dt-nowrap">Name</th>
+                        <th scope="col" class="text-md dt-nowrap">Photo</th>
+                        <th scope="col" class="text-md dt-nowrap">Phone</th>
+                        <th scope="col" class="text-md dt-nowrap">Address</th>
+                        <th scope="col" class="text-md dt-nowrap">Start Date</th>
+                        <th scope="col" class="text-md dt-nowrap">End Date</th>
+                        <th scope="col" class="text-md dt-nowrap">Department</th>
+                        <th scope="col" class="text-md dt-nowrap">Designation</th>
+                        <th scope="col" class="text-md dt-nowrap">Location</th>
+                       
+                      </tr>
+                    </thead>
+                    <tbody>
+                        
+                      <tr>
+                      
+                        <td class="dt-nowrap">{{ employee.join_date }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_no }}</td>
+                        <td class="dt-nowrap">{{ employee.name }}</td>
+                        <td class="dt-nowrap">
+                         
+                              <img src="{{employee.photo.url}}" alt="Employee Photo" style="max-height: 100px;">
+                         
+                      </td>
+                        <td class="dt-nowrap">{{ employee.phone }}</td>
+                        <td class="dt-nowrap">{{ employee.address }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_start_date }}</td>
+                        <td class="dt-nowrap">{{ employee.emp_end_date }}</td>
+                        <td class="dt-nowrap">{{ department}}</td>
+                        <td class="dt-nowrap">{{designation}}</td>
+                        <td class="dt-nowrap">{{location}}</td>
+                        
+                      </tr>
+                      
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <div class="spacex mb-5"></div>
+      </main>
+     
+</body>
+</html>
+{% endblock %}

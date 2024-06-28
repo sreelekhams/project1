@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import JsonResponse
+from django.conf import settings
 
 # Create your views here.
 def indexpage(request):
@@ -308,7 +309,7 @@ def employee_list(request):
     sql_query = """
     SELECT 
         e.employee_id,e.join_date, e.emp_no, e.name, e.phone, e.address, 
-        e.emp_start_date, e.emp_end_date, 
+        e.emp_start_date, e.emp_end_date,e.photo,e.status,
         d.department_name, ds.designation_name, l.location_name
     FROM master_employee e
     LEFT JOIN master_department d ON e.department_id = d.department_id
@@ -316,12 +317,12 @@ def employee_list(request):
     LEFT JOIN master_location l ON e.location_id = l.location_id;
     """
     
-    # Execute the query
+   
     with connection.cursor() as cursor:
         cursor.execute(sql_query)
         employees = cursor.fetchall()  # Fetch all rows
     
-    # Process the results
+    print(employees)
     employee_list = []
     for row in employees:
         employee = {
@@ -333,12 +334,14 @@ def employee_list(request):
             'address': row[5],
             'emp_start_date': row[6],
             'emp_end_date': row[7],
-            'department_name': row[8],
-            'designation_name': row[9],
-            'location_name': row[10],
+            'photo':settings.MEDIA_URL + row[8],
+            'status':row[9],
+            'department_name': row[10],
+            'designation_name': row[11],
+            'location_name': row[12],
         }
         employee_list.append(employee)
-    
+    print(employee_list,"employee_list")
     context = {
         'employees': employee_list
     }

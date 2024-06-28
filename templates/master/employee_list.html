@@ -49,17 +49,13 @@
                       <tr>
                         <th scope="col" class="text-md dt-nowrap">Sl.No</th>
                         <th scope="col" class="text-md dt-nowrap">Actions</th>
-                        <th scope="col" class="text-md dt-nowrap">Join_date </th>
+                        
                         <th scope="col" class="text-md dt-nowrap">Employee No</th>
                         <th scope="col" class="text-md dt-nowrap">Name</th>
-                        <th scope="col" class="text-md dt-nowrap">Photo</th>
-                        <th scope="col" class="text-md dt-nowrap">Phone</th>
-                        <th scope="col" class="text-md dt-nowrap">Address</th>
-                        <th scope="col" class="text-md dt-nowrap">Start Date</th>
-                        <th scope="col" class="text-md dt-nowrap">End Date</th>
+                  
                         <th scope="col" class="text-md dt-nowrap">Department</th>
                         <th scope="col" class="text-md dt-nowrap">Designation</th>
-                        <th scope="col" class="text-md dt-nowrap">Location</th>
+                       
                        
                       </tr>
                     </thead>
@@ -83,7 +79,7 @@
                                 <i class="bi bi-pencil-fill"></i>
                               </button> </a
                             >&nbsp;
-                            <a href="project-allocation-view.html">
+                            <a href="{% url 'employee_detail' employee.employee_id %}">
                               <button
                                 type="button"
                                 class="btn btn-outline-success"
@@ -109,21 +105,13 @@
                           </div>
                         </td>
                      
-                        <td class="dt-nowrap">{{ employee.join_date }}</td>
+                       
                         <td class="dt-nowrap">{{ employee.emp_no }}</td>
                         <td class="dt-nowrap">{{ employee.name }}</td>
-                        <td class="dt-nowrap">
-                         
-                              <img src="{{ employee.photo}}" alt="Employee Photo" style="max-height: 100px;">
-                         
-                      </td>
-                        <td class="dt-nowrap">{{ employee.phone }}</td>
-                        <td class="dt-nowrap">{{ employee.address }}</td>
-                        <td class="dt-nowrap">{{ employee.emp_start_date }}</td>
-                        <td class="dt-nowrap">{{ employee.emp_end_date }}</td>
+                        
                         <td class="dt-nowrap">{{ employee.department_name }}</td>
                         <td class="dt-nowrap">{{ employee.designation_name }}</td>
-                        <td class="dt-nowrap">{{ employee.location_name }}</td>
+                      
                         
                       </tr>
                       {% endfor %}

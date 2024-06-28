@@ -93,13 +93,24 @@ def department_list(request):
     with connection.cursor() as cursor:
         cursor.execute(sql_query)
         departments = cursor.fetchall()  # Fetch all rows
-    print(departments,"departments")
+   
     # Process the results
     context = {
         'departments': departments
     }
     
     return render(request, 'master/department_list.html', context)
+
+
+@login_required(login_url='adlogin')
+def department_detail(request,pk):
+     departments = get_object_or_404(Department,department_id=pk)
+     print(departments,"kkkkk")
+     context = {
+        'departments': departments
+    }
+    
+     return render(request, 'master/department_detail.html', context)
 
 @login_required(login_url='adlogin')
 def department_delete(request, pk):
@@ -191,6 +202,17 @@ def designation_list(request):
     return render(request, 'master/designation_list.html', context)
 
 @login_required(login_url='adlogin')
+def designation_detail(request,pk):
+     designation = get_object_or_404(Designation,designation_id=pk)
+     department_name = designation.department.department_name
+     context = {
+        'designation': designation,
+        'department_name':department_name
+    }
+    
+     return render(request, 'master/designation_detail.html', context)
+
+@login_required(login_url='adlogin')
 def designation_delete(request, pk):
     designation = Designation.objects.get(designation_id=pk)
     
@@ -240,6 +262,17 @@ def location_list(request):
     }
     
     return render(request, 'master/location_list.html', context)
+
+
+@login_required(login_url='adlogin')
+def location_detail(request,pk):
+     location = get_object_or_404(Location,location_id=pk)
+    
+     context = {
+        'location': location
+    }
+    
+     return render(request, 'master/location_detail.html', context)
 
 @login_required(login_url='adlogin')
 def location_edit(request, pk):
@@ -368,7 +401,25 @@ def employee_edit(request, pk):
             return render(request, template_name, context)
     else:
         return render(request, template_name, context)
+
+
+@login_required(login_url='adlogin')
+def employee_detail(request,pk):
+     employee = get_object_or_404(Employee,employee_id=pk)
+     department=employee.department.department_name
+     designation=employee.designation.designation_name
+     location=employee.location.location_name
     
+     context = {
+        
+        'employee': employee,
+        'department':department,
+        'location':location,
+        'designation':designation
+    }
+    
+     return render(request, 'master/employee_detail.html', context)
+   
 @login_required(login_url='adlogin')    
 def employee_delete(request, pk):
     employee = Employee.objects.get(employee_id=pk)

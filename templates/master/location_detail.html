@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <main id="main" class="main">
+        <div class="pagetitle">
+          <h1>Location</h1>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="../index.html">Home</a></li>
+              <li class="breadcrumb-item">Master</li>
+              <li class="breadcrumb-item active">Location Detail</li>
+            </ol>
+          </nav>
+        </div>
+        <section class="section">
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card border border-primary">
+                <div class="card-body">
+                  <div class="card-title">
+                    <div class="d-lg-flex">
+                      <div>
+                        <h5 class="card-heading">List Of Location</h5>
+                      </div>
+                      <div class="ms-auto my-auto mt-lg-0 mt-4">
+                       
+                      </div>
+                    </div>
+                  </div>
+                  <table
+                    class="display responsive"
+                    style="width: 100%"
+                    id="myTable"
+                  >
+                    <thead>
+                      <tr>
+                    
+                      
+                        <th scope="col" class="text-md dt-nowrap">
+                        Location Name
+                        </th>
+                        <th scope="col" class="text-md dt-nowrap">
+                         Description
+                        </th>
+                       
+                      </tr>
+                    </thead>
+                    <tbody>
+                      
+                      <tr>
+                       
+                      
+                        <td class="dt-nowrap">{{location.location_name}}</td>
+                        <td class="dt-nowrap">
+                          {{location.description}}
+                        </td>
+                        
+                      </tr>
+                     
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <div class="spacex mb-5"></div>
+      </main>
+     
+</body>
+</html>
+{% endblock %}

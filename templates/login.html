@@ -64,16 +64,13 @@
                     <form class="row g-3 needs-validation" method="post" action="{% url 'adlogin' %}" enctype="multipart/form-data">
                         {% csrf_token %}>
                       <div class="col-12">
-                        <label for="yourUsername" class="form-label"
-                          >Username</label
-                        >
+                        <label for="yourUsername" class="form-label">Username</label>
                         <input
                           type="text"
                           name="username"
                           class="form-control"
                           id="yourUsername"
-                          required
-                        />
+                          required/>
                         <div class="invalid-feedback">
                           Please enter your username.
                         </div>
@@ -110,8 +107,7 @@
                 <div class="credits">
                   Designed & Developed by
                   <a href="https://datahubtechnologies.com/"
-                    >Datahub Technologies</a
-                  >
+>Datahub Technologies</a>
                 </div>
               </div>
             </div>

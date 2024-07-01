@@ -135,7 +135,37 @@
                             {{ form.location.errors }}
                         </div>
                       </div>
-                    
+                      <div>
+                        <h4>Skills</h4>
+                        <div id="skills-formset">
+                            {{ formset.management_form }}
+                            {% for form in formset %}
+                                <div class="skill-form">
+                                    <div class="row mb-3">
+                                        <label class="col-md-4 col-lg-3 col-form-label">Skill Name</label>
+                                        <div class="col-md-8 col-lg-9">
+                                            {{ form.skill_name }}
+                                            {{ form.skill_name.errors }}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-md-4 col-lg-3 col-form-label">Skill Description</label>
+                                        <div class="col-md-8 col-lg-9">
+                                            {{ form.description }}
+                                            {{ form.description.errors }}
+                                        </div>
+                                    </div>
+                                  
+                                        
+                                  
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add-more-skill">Add</button>
+                        <br><br>
+                       
+                    <br>
+                    <br>
                     <button type="submit">Save</button>
                 </form>
               </div>
@@ -176,6 +206,40 @@
            
         });
     </script>
+
+   <script type="text/javascript">
+      $(document).ready(function() {
+          // Add more skill form
+          $("#add-more-skill").click(function() {
+              var formIdx = $("#id_form-TOTAL_FORMS").val();
+              $("#skills-formset").append($("#empty-form").html().replace(/__prefix__/g, formIdx));
+              $("#id_form-TOTAL_FORMS").val(parseInt(formIdx) + 1);
+          });
+
+          // Delete skill form
+          $(document).on("click", ".delete-skill", function() {
+              $(this).closest(".skill-form").remove();
+          });
+      });
+  </script>
+
+  <script type="text/template" id="empty-form">
+    <div class="skill-form">
+        <div class="row mb-3">
+            <label class="col-md-4 col-lg-3 col-form-label">Skill Name</label>
+            <div class="col-md-8 col-lg-9">
+                <input type="text" name="form-__prefix__-skill_name" class="form-control" required id="id_form-__prefix__-skill_name">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-md-4 col-lg-3 col-form-label">Skill Description</label>
+            <div class="col-md-8 col-lg-9">
+                <textarea name="form-__prefix__-description" class="form-control" rows="3" required id="id_form-__prefix__-description"></textarea>
+            </div>
+        </div>
+        <button type="button" class="delete-skill">Delete</button>
+    </div>
+</script>
     
 </body>
 </html>

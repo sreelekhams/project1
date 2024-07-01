@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Department,User,Designation,Location,Employee
-from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm
+from .models import Department,User,Designation,Location,Employee,Skill
+from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm,SkillFormSet
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -306,27 +306,33 @@ def location_delete(request, pk):
 @login_required(login_url='adlogin')
 def employee_add(request):
     form = EmployeeForm
+    formset = SkillFormSet(queryset=Skill.objects.none())
     template_name = 'master/add_employee.html'
-    context = {'form': form}
+    context = {'form': form, 'formset': formset}
    
     if request.method == 'POST':
         print(request.user.id,"Form submitted")
         form = EmployeeForm(request.POST, request.FILES)
-        
-        if form.is_valid():
+        formset = SkillFormSet(request.POST, queryset=Skill.objects.none())
+        if form.is_valid() and formset.is_valid():
             print("Form is valid")
             data = form.save()
             data.created_by =User.objects.get(id=request.user.id)
             data.save()
-           
+            
+            
+            for skill_form in formset:
+                skill = skill_form.save(commit=False)
+                skill.employee = data
+                skill.save()
           
             return redirect('employee_list')
             
         else:
             print("Form is not valid")
-            print(form.errors)  # Print form errors to debug
+            print(form.errors)  
             messages.error(request, 'Data is not valid.', extra_tags='alert-danger')
-            context = {'form': form}
+            context = {'form': form,'formset': formset}
             return render(request, template_name, context)
     else :
         print("Rendering form")

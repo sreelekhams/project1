@@ -1,5 +1,6 @@
 from django import forms
-from .models import Department,Designation,Location,Employee
+from .models import Department,Designation,Location,Employee,Skill
+from django.forms import modelformset_factory
 
 class DepartmentForm(forms.ModelForm):
     class Meta:
@@ -62,3 +63,15 @@ class EmployeeForm(forms.ModelForm):
             'designation': forms.Select(attrs={'class': 'form-control','id': 'designation-dropdown'}),
             'location': forms.Select(attrs={'class': 'form-control',})
         }
+
+
+class SkillForm(forms.ModelForm):
+    class Meta:
+        model = Skill
+        fields = ['skill_name','description']
+        widgets = {
+            'skill_name': forms.TextInput(attrs={'type': 'text', 'required': 'true'}),
+            'description':forms.TextInput(attrs={'type': 'text', 'required': 'true'}),
+        }
+
+SkillFormSet = modelformset_factory(Skill, form=SkillForm, extra=1, can_delete=True)

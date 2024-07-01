@@ -100,3 +100,11 @@ class Employee(Base):
                              on_delete=models.SET_NULL)
     def __str__(self):
         return self.name    
+class Skill(models.Model):
+    skill_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey('Employee', related_name='skills', on_delete=models.CASCADE)
+    skill_name = models.CharField(max_length=255,null=True, blank=True)
+    description = models.CharField(max_length=255,null=True, blank=True)
+
+    def __str__(self):
+        return self.skill_name

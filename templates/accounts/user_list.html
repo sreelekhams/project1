@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+  
+    <main id="main" class="main">
+        <div class="pagetitle">
+          <h1>User</h1>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="../index.html">Home</a></li>
+              <li class="breadcrumb-item">Master</li>
+              <li class="breadcrumb-item active">User List</li>
+            </ol>
+          </nav>
+        </div>
+        <section class="section">
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card border border-primary">
+                <div class="card-body">
+                  <div class="card-title">
+                    <div class="d-lg-flex">
+                      <div>
+                        <h5 class="card-heading">List Of User</h5>
+                      </div>
+                      <div class="ms-auto my-auto mt-lg-0 mt-4">
+                        <div class="ms-auto my-auto">
+                          <a href="{% url 'user_add' %}">
+                            <button type="button" class="btn btn-success">
+                              <i class="bi bi-plus-circle me-1"></i> Add User
+                             
+                            </button>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <table
+                    class="display responsive"
+                    style="width: 100%"
+                    id="myTable"
+                  >
+                    <thead>
+                      <tr>
+                        <th scope="col" class="text-md dt-nowrap">Sl.No</th>
+                        <th scope="col" class="text-md dt-nowrap">Actions</th>
+                        <th scope="col" class="text-md dt-nowrap">
+                          User
+                        </th>
+                       
+                       
+                      </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in user %}
+                      <tr>
+                        <th scope="row">{{ forloop.counter }}</th>
+                        <td
+                          class="justify-content-center align-content-center"
+                          style="min-height: 100% !important; min-width: 100%"
+                        >
+                          <div class="d-flex">
+                            <a href="{% url 'user_edit' i.0 %}">
+                              <button
+                                type="button"
+                                class="btn btn-outline-info"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Edit"
+                              >
+                                <i class="bi bi-pencil-fill"></i>
+                              </button> </a
+                            >&nbsp;
+                            <a href="">
+                              <button
+                                type="button"{% url 'user_detail' i.0 %}
+                                class="btn btn-outline-success"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Details"
+                              >
+                                <i class="bi bi-eye-fill"></i>
+                              </button> </a
+                            >&nbsp;
+                            <a href="{% url 'user_delete' i.0 %}">
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteModal"
+                              title="Delete"
+                            >
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                            &nbsp;
+  
+                          </div>
+                        </td>
+                        <td class="dt-nowrap">{{i.4}}</td>
+                       
+                        
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <div class="spacex mb-5"></div>
+      </main>
+              </div>
+            </div>
+          </div>
+         
+        </section>
+        <div class="spacex mb-5"></div>
+      </main>
+   
+    </body>
+    </html>
+    {% endblock %}

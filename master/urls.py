@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     path('',views.indexpage,name="indexpage"),
-    path('adlogin', views.admin_login, name='adlogin'),
+    path('adlogin', views.user_login, name='adlogin'),
     path('admin_logout', views.admin_logout, name='admin_logout'),
     path('department_add', views.department_add, name='department_add'),
     path('department_edit/<str:pk>/', views.department_edit, name='department_edit'),
@@ -26,5 +26,10 @@ urlpatterns = [
     path('employee_edit/<str:pk>/', views.employee_edit, name='employee_edit'),
     path('employee_delete/<str:pk>/', views.employee_delete, name='employee_delete'),
     path('employee_detail/<str:pk>/', views.employee_detail, name='employee_detail'),
+    path('user_add', views.user_add, name='user_add'),
+    path('user_list', views.user_list, name='user_list'),
+     path('user_detail/<str:pk>/', views.user_detail, name='user_detail'),
+      path('user_edit/<str:pk>/', views.user_edit, name='user_edit'),
+    path('user_delete/<str:pk>/', views.user_delete, name='user_delete'),
     
     ]

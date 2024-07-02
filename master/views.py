@@ -1,38 +1,64 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Department,User,Designation,Location,Employee,Skill
-from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm,SkillFormSet
+from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm,SkillFormSet,User_Add_Form,User_Edit_Form
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import JsonResponse
 from django.conf import settings
+from django.contrib.auth.hashers import make_password, check_password
 
 # Create your views here.
 def indexpage(request):
     return render(request, 'index.html')
 
-def admin_login(request):
+
+
+def user_login(request):
+
+    template_name = 'login.html'
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+        user_exist = User.objects.filter(username=username).exists()
+       
+        if user_exist:
            
-            login(request, user)
+            user = authenticate(request, username=username, password=password)
            
-            return redirect('indexpage')
+            if user is not None:
+                if user.role == 'ADMIN' :
+                   
+                    login(request, user)
+           
+                    return redirect('indexpage')
+                
+                elif user.role == 'VIEWER':
+                    login(request, user)
+                    return redirect('indexpage')
+                
+                else:
+                    context = {'msg': 'Invalid Username or Password!'}
+                    return render(request, template_name, context)
+            else:
+                
+                context = {'msg': 'Password is incorrect!'}
+                return render(request, template_name, context)
+
         else:
-          
-            messages.error(request, 'Invalid username or password.')
-    return render(request, 'login.html')
+            context = {'msg': 'User Does Not exist'}
+            return render(request, template_name, context)  
+            
+    return render(request, template_name)
 
 
 def admin_logout(request):
     
     logout(request)
   
-    return redirect(admin_login)
+    return redirect(user_login)
 
 @login_required(login_url='adlogin')
 def department_add(request):
@@ -399,14 +425,13 @@ def employee_edit(request, pk):
         formset = SkillFormSet(request.POST, queryset=Skill.objects.filter(employee=emp_obj))
         
         if form.is_valid() :
-            print("kkkkkkkk")
+         
             employee = form.save(commit=False)
             employee.save()
-            print("jjjjjjj")
-            print(formset.errors,"11111111111")
+           
             if formset.is_valid():
                 for i in formset:
-                    print("iii",i)
+                  
                     skill = i.save()
                     skill.employee = employee
                     skill.save()
@@ -451,3 +476,93 @@ def employee_delete(request, pk):
     
     employee.delete()
     return redirect('employee_list')
+
+
+def user_add(request):
+    form = User_Add_Form
+   
+    template_name = 'accounts/user_add.html'
+    
+    context = {'form': form}
+    if request.method == 'POST':
+        form = User_Add_Form(request.POST, request.FILES)
+        
+        if form.is_valid() :
+            data = form.save(commit=False)
+           
+            passw = data.password
+            passw = make_password(passw)
+            data.password = passw
+           
+            data.save()
+
+            return redirect('employee_list')
+        else:
+           
+            context = {'form': form,}
+            return render(request, template_name, context)
+    else:
+        return render(request, template_name, context)
+    
+
+
+def user_list(request):
+   
+    sql_query = "SELECT * FROM master_user;"
+    
+   
+    with connection.cursor() as cursor:
+        cursor.execute(sql_query)
+        user = cursor.fetchall()  
+    
+   
+    context = {
+        'user': user
+    }
+    
+    return render(request, 'accounts/user_list.html', context)
+
+
+@login_required(login_url='adlogin')
+def user_detail(request,pk):
+     user = get_object_or_404(User,id=pk)
+    
+     context = {
+        'user': user
+    }
+    
+     return render(request, 'accounts/user_detail.html', context)
+
+
+def user_edit(request, pk):
+    template_name = 'accounts/user_edit.html'
+    user_obj = User.objects.get(id=pk)
+   
+    form = User_Edit_Form(instance=user_obj)
+   
+    context = {'form': form}
+    if request.method == 'POST':
+        form = User_Edit_Form(request.POST, request.FILES, instance=user_obj)
+       
+        if form.is_valid():
+            data = form.save(commit=False)
+           
+            data.save()
+           
+            return redirect('user_list')
+        else:
+           
+            context = {'form': form,}
+            print(form.errors)
+            return render(request, template_name, context)
+    else:
+        return render(request, template_name, context)
+    
+
+
+@login_required(login_url='adlogin')    
+def user_delete(request, pk):
+    user = User.objects.get(id=pk)
+    
+    user.delete()
+    return redirect('user_list')

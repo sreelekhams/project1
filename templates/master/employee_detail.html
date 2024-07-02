@@ -72,6 +72,17 @@
                 <th scope="col" class="text-md dt-nowrap">Location</th>
                 <td class="dt-nowrap">{{location}}</td>
             </tr>
+          
+            <tr>
+              <th>Skills</th>
+              <td>
+                  {% for skill in skills %}
+                      {{ skill.skill_name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+              </td>
+               
+            </tr>
+          
              
             </tbody>
           </table>

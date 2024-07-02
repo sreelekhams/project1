@@ -74,4 +74,4 @@ class SkillForm(forms.ModelForm):
             'description':forms.TextInput(attrs={'type': 'text', 'required': 'true'}),
         }
 
-SkillFormSet = modelformset_factory(Skill, form=SkillForm, extra=1, can_delete=True)
+SkillFormSet = modelformset_factory(Skill, form=SkillForm, extra=0, can_delete=True)

@@ -65,7 +65,9 @@
                           class="justify-content-center align-content-center"
                           style="min-height: 100% !important; min-width: 100%"
                         >
+                       
                           <div class="d-flex">
+                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
                             <a href="{% url 'user_edit' i.0 %}">
                               <button
                                 type="button"
@@ -77,7 +79,8 @@
                                 <i class="bi bi-pencil-fill"></i>
                               </button> </a
                             >&nbsp;
-                            <a href="">
+                            {% endif %}
+                            <a href="{% url 'user_detail' i.0 %}">
                               <button
                                 type="button"{% url 'user_detail' i.0 %}
                                 class="btn btn-outline-success"
@@ -88,6 +91,7 @@
                                 <i class="bi bi-eye-fill"></i>
                               </button> </a
                             >&nbsp;
+                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
                             <a href="{% url 'user_delete' i.0 %}">
                             <button
                               type="button"
@@ -99,7 +103,7 @@
                               <i class="bi bi-trash-fill"></i>
                             </button>
                             &nbsp;
-  
+                            {% endif %}
                           </div>
                         </td>
                         <td class="dt-nowrap">{{i.4}}</td>

@@ -66,6 +66,7 @@
                           style="min-height: 100% !important; min-width: 100%"
                         >
                           <div class="d-flex">
+                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
                             <a href="{% url 'department_edit' d.2 %}">
                               <button
                                 type="button"
@@ -77,6 +78,7 @@
                                 <i class="bi bi-pencil-fill"></i>
                               </button> </a
                             >&nbsp;
+                            {% endif %}
                             <a href="{% url 'department_detail' d.2 %}">
                               <button
                                 type="button"
@@ -88,6 +90,7 @@
                                 <i class="bi bi-eye-fill"></i>
                               </button> </a
                             >&nbsp;
+                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
                             <a href="{% url 'department_delete' d.2 %}">
                             <button
                               type="button"
@@ -99,7 +102,7 @@
                               <i class="bi bi-trash-fill"></i>
                             </button>
                             &nbsp;
-  
+                            {% endif %}
                           </div>
                         </td>
                         <td class="dt-nowrap">{{d.3}}</td>

@@ -8,18 +8,18 @@ from django.contrib.auth.models import User,AbstractUser, Group, Permission
 class User(AbstractUser):
     ROLE_TYPES = (
         ('ADMIN', 'ADMIN'),
-        ('EMPLOYEE', 'EMPLOYEE'),
+        ('VIEWER', 'VIEWER'),
     )
 
     role = models.CharField(max_length=10, choices=ROLE_TYPES)
 
     groups = models.ManyToManyField(
         Group,
-        related_name='custom_user_groups'  # Change related_name to avoid clashes
+        related_name='custom_user_groups' 
     )
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='custom_user_permissions'  # Change related_name to avoid clashes
+        related_name='custom_user_permissions' 
     )
 
     def __str__(self):
@@ -103,7 +103,7 @@ class Employee(Base):
 class Skill(models.Model):
     skill_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey('Employee', related_name='skills', on_delete=models.CASCADE)
-    skill_name = models.CharField(max_length=255,null=True, blank=True)
+    skill_name = models.CharField(max_length=100,null=True, blank=True)
     description = models.CharField(max_length=255,null=True, blank=True)
 
     def __str__(self):

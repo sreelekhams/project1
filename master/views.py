@@ -361,7 +361,7 @@ def employee_list(request):
         cursor.execute(sql_query)
         employees = cursor.fetchall()  # Fetch all rows
     
-    print(employees)
+   
     employee_list = []
     for row in employees:
         employee = {
@@ -380,7 +380,7 @@ def employee_list(request):
             'location_name': row[12],
         }
         employee_list.append(employee)
-    print(employee_list,"employee_list")
+   
     context = {
         'employees': employee_list
     }
@@ -390,23 +390,40 @@ def employee_list(request):
 @login_required(login_url='adlogin')
 def employee_edit(request, pk):
     template_name = 'master/employee_edit.html'
-    emp_obj = Employee.objects.get(employee_id=pk)
-    form = EmployeeForm(instance=emp_obj)
-    context = {'form': form, 'emp_obj': emp_obj}
+    emp_obj = get_object_or_404(Employee, employee_id=pk)
+    related_model = get_object_or_404(Skill, employee_id=emp_obj)
+
+    
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=emp_obj)
-        if form.is_valid():
-            data = form.save(commit=False)
-            data.save()
+        formset = SkillFormSet(request.POST, queryset=Skill.objects.filter(employee=emp_obj))
+        
+        if form.is_valid() :
+            print("kkkkkkkk")
+            employee = form.save(commit=False)
+            employee.save()
+            print("jjjjjjj")
+            print(formset.errors,"11111111111")
+            if formset.is_valid():
+                for i in formset:
+                    print("iii",i)
+                    skill = i.save()
+                    skill.employee = employee
+                    skill.save()
+             
             messages.success(request, 'Employee Successfully Updated.', 'alert-success')
             return redirect('employee_list')
         else:
-            print(form.errors)
-            messages.success(request, 'Data is not valid.', 'alert-danger')
-            context = {'form': form}
-            return render(request, template_name, context)
+            print(form.errors,"kkkk")
+            print(formset.errors,"11111111111")
+            messages.error(request, 'Data is not valid.', 'alert-danger')
     else:
-        return render(request, template_name, context)
+        form = EmployeeForm(instance=emp_obj)
+        formset = SkillFormSet(queryset=Skill.objects.filter(employee=emp_obj))
+    
+    context = {'form': form, 'formset': formset, 'emp_obj': emp_obj}
+    return render(request, template_name, context)
+
 
 
 @login_required(login_url='adlogin')
@@ -415,13 +432,15 @@ def employee_detail(request,pk):
      department=employee.department.department_name
      designation=employee.designation.designation_name
      location=employee.location.location_name
+     skills = Skill.objects.filter(employee=employee)
     
      context = {
         
         'employee': employee,
         'department':department,
         'location':location,
-        'designation':designation
+        'designation':designation,
+        'skills': skills,
     }
     
      return render(request, 'master/employee_detail.html', context)

@@ -8,6 +8,9 @@ from django.db import connection
 from django.http import JsonResponse
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
+from django.http import HttpResponse
+from datetime import datetime
+import openpyxl
 
 # Create your views here.
 def indexpage(request):
@@ -566,3 +569,75 @@ def user_delete(request, pk):
     
     user.delete()
     return redirect('user_list')
+
+
+def employee_report(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    employees = Employee.objects.all()
+    
+
+    employees_skills = []
+    for employee in employees:
+        skills = employee.skills.all()
+        employees_skills.append({
+            'employee': employee,
+            'skills': skills
+        })
+
+    if start_date and end_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            employees = employees.filter(join_date__range=[start_date, end_date])
+        except ValueError:
+            # Handle invalid date format
+            pass
+
+    if 'download' in request.GET:
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': 'attachment; filename=employee_report.xlsx'},
+        )
+
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Employee Report'
+
+        # Write the header
+        headers = ['Employee Number', 'Name', 'Phone', 'Start Date', 'End Date', 'Status', 'Department', 'Designation', 'Location', 'Skills']
+        sheet.append(headers)
+
+        # Write the data
+        for employee in employees:
+          
+            skills = Skill.objects.filter(employee=employee)
+          
+            skills_list = ", ".join([skill.skill_name for skill in skills])
+            
+            row = [
+                employee.emp_no,
+                employee.name,
+                employee.phone,
+                employee.emp_start_date.strftime('%Y-%m-%d') if employee.emp_start_date else '',
+                employee.emp_end_date.strftime('%Y-%m-%d') if employee.emp_end_date else '',
+                employee.status,
+                employee.department.department_name if employee.department else '',
+                employee.designation.designation_name if employee.designation else '',
+                employee.location.location_name if employee.location else '',
+                skills_list,
+            ]
+            sheet.append(row)
+       
+
+        workbook.save(response)
+        return response
+  
+    context = {
+        'employees': employees_skills,
+        
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'master/employee_report.html', context)

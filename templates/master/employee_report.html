@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <main id="main" class="main">
+      <h2>Employee Report</h2>
+      <form method="get" action=".">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date"  value="{{ start_date|date:"Y-m-d" }}">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" value="{{ end_date|date:"Y-m-d" }}">
+        <button type="submit" class="btn btn-success">Filter</button>
+        <a href="?start_date={{ start_date|date:"Y-m-d" }}&end_date={{ end_date|date:"Y-m-d" }}&download=1" class="btn btn-success">Download Report</a>
+      </form>
+      <br>
+     
+      <table
+      class="display responsive"
+      style="width: 100%"
+      id="myTable"
+    >
+      <thead>
+        <tr>
+          <th scope="col" class="text-md dt-nowrap">Sl.No</th>
+          <th scope="col" class="text-md dt-nowrap">Joining date</th>
+            <th scope="col" class="text-md dt-nowrap">Name</th>
+            <th scope="col" class="text-md dt-nowrap">Phone</th>
+            <th scope="col" class="text-md dt-nowrap">Start Date</th>
+            <th scope="col" class="text-md dt-nowrap">End Date</th>
+            <th scope="col" class="text-md dt-nowrap">Status</th>
+            <th scope="col" class="text-md dt-nowrap">Department</th>
+            <th scope="col" class="text-md dt-nowrap">Designation</th>
+            <th scope="col" class="text-md dt-nowrap">Location</th>
+            <th scope="col" class="text-md dt-nowrap">Skills</th>
+         
+         
+        </tr>
+      </thead>
+      <tbody>
+        {% for employee in employees %}
+       
+          <th scope="row">{{ forloop.counter }}</th>
+          <td scope="row">{{ employee.employee.join_date }}</td>
+          <td scope="row">{{ employee.employee.name }}</td>
+          <td scope="row">{{ employee.employee.phone }}</td>
+          <td scope="row">{{ employee.employee.emp_start_date }}</td>
+          <td scope="row">{{ employee.employee.emp_end_date }}</td>
+          <td scope="row">{{ employee.employee.status }}</td>
+          <td scope="row">{{ employee.employee.department.department_name }}</td>
+          <td scope="row">{{ employee.employee.designation.designation_name }}</td>
+          <td scope="row">{{ employee.employee.location.location_name }}</td>
+          <td scope="row">
+            {% for skill in employee.skills %}
+              {{ skill.skill_name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+         
+         
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+   
+      </main>
+     
+</body>
+
+
+</html>
+{% endblock %}

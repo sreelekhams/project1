@@ -102,3 +102,6 @@ class User_Edit_Form(forms.ModelForm):
            
             'role': forms.Select(attrs={'class': 'form-control'}, choices=User.ROLE_TYPES),
         }
+
+class UploadFileForm(forms.Form):
+    file = forms.FileField()

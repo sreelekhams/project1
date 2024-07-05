@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Department,User,Designation,Location,Employee,Skill
-from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm,SkillFormSet,User_Add_Form,User_Edit_Form
+from .forms import DepartmentForm,Designation_Add_Form,LocationForm,EmployeeForm,SkillFormSet,User_Add_Form,User_Edit_Form,UploadFileForm
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -11,6 +11,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpResponse
 from datetime import datetime
 import openpyxl
+import os
 
 # Create your views here.
 def indexpage(request):
@@ -641,3 +642,294 @@ def employee_report(request):
         'end_date': end_date,
     }
     return render(request, 'master/employee_report.html', context)
+
+
+
+def handle_uploaded_file(file):
+    workbook = openpyxl.load_workbook(file)
+    sheet = workbook.active
+
+    data = []
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        data.append(row)
+
+    return data
+
+def bulk_upload_dep(request):
+   
+    if request.method == 'POST':
+       
+        data = handle_uploaded_file(request.FILES['filename'])
+      
+        for row in data:
+            
+            if not Department.objects.filter(department_name=row[0]).exists():
+                Department.objects.create(department_name=row[0],description=row[1])
+        return redirect('department_list')
+    
+   
+def bulk_upload_des(request):
+    if request.method == 'POST':
+       
+        data = handle_uploaded_file(request.FILES['file'])
+        print(data,"data")
+       
+        for row in data:
+            department_name = row[0]
+            designation_name = row[1]
+            description = row[2]
+
+         
+            department = Department.objects.filter(department_name=department_name).first()
+            if department and not Designation.objects.filter(designation_name=designation_name, department=department).exists():
+                Designation.objects.create(department=department, designation_name=designation_name, description=description)
+
+        return redirect('designation_list')
+   
+def bulk_upload_loc(request):
+   
+    if request.method == 'POST':
+       
+        data = handle_uploaded_file(request.FILES['file'])
+      
+        for row in data:
+            
+            if not Location.objects.filter(location_name=row[0]).exists():
+                Location.objects.create(location_name=row[0],description=row[1])
+        return redirect('location_list')
+    
+
+
+
+
+def bulk_upload_emp(request):
+    if request.method == 'POST':
+        files = request.FILES.getlist('files')  # Accessing multiple files using getlist()
+        print(files)
+        photo_files = {file.name: file for file in files if file.name.endswith(('.png', '.jpg', '.jpeg'))} 
+        print(photo_files,"photo_files") # Collect photo files
+        errors = []
+        for uploaded_file in files:
+            try:
+                data = handle_uploaded_file(uploaded_file)  # Process each file using your utility function
+
+                for row in data:
+                    join_date = row[0]
+                    emp_no = row[1]
+                    name = row[2]
+                    phone = row[3]
+                    address = row[4]
+                    emp_start_date = row[5]
+                    emp_end_date = row[6]
+                    status = row[7]
+                    department_name = row[8]
+                    designation_name = row[9]
+                    location_name = row[10]
+                    photo_name  = row[11]
+                    skills_data = row[12:]  # Assuming skills data starts from the 12th column onwards
+
+                    # Check if the employee already exists
+                    employee_exists = Employee.objects.filter(emp_no=emp_no).exists()
+                    if employee_exists:
+                        raise ValueError(f'Employee with Employee No. {emp_no} already exists.')
+
+                    department = Department.objects.filter(department_name=department_name).first()
+                    designation = Designation.objects.filter(designation_name=designation_name, department=department).first()
+                    location = Location.objects.filter(location_name=location_name).first()
+
+                    if not department or not designation or not location:
+                        raise ValueError('Invalid department, designation, or location')
+
+                   
+                  
+                    photo_file = photo_files.get(photo_name)
+                    print(photo_file)
+                   
+                    employee = Employee.objects.create(
+                        emp_no=emp_no,
+                        join_date=join_date,
+                        name=name,
+                        phone=phone,
+                        address=address,
+                        emp_start_date=emp_start_date,
+                        emp_end_date=emp_end_date,
+                        status=status,
+                        department=department,
+                        designation=designation,
+                        location=location,
+                        photo=photo_file
+                    )
+
+                    # Create associated skills
+                    for i in range(0, len(skills_data), 2):  # Assuming each skill has two columns: skill_name and description
+                        skill_name = skills_data[i]
+                        skill_description = skills_data[i + 1]
+                        Skill.objects.create(employee=employee, skill_name=skill_name, description=skill_description)
+                
+
+            except Exception as e:
+                errors.append(str(e))
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            messages.success(request, 'Employees uploaded successfully.')
+
+        return redirect('employee_list')
+
+    return render(request, 'employee_list.html')
+
+
+def export_departments_to_excel(request):
+   
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Departments'
+
+
+    columns = ['Sl.No',  'Department Name', 'Description']
+    row_num = 1
+
+  
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+    
+    for index, department in Department.objects.all():
+        row_num += 1
+        row = [
+             index, 
+            department.department_name,
+            department.description,
+        ]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=departments.xlsx'
+
+    workbook.save(response)
+    return response
+
+
+
+def export_designations_to_excel(request):
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Designations'
+
+    columns = ['Sl.No', 'Department Name', 'Designation Name', 'Description']
+    row_num = 1
+
+   
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+   
+    for index, designation in enumerate(Designation.objects.all(), start=1):
+        row_num += 1
+        row = [
+            index, 
+            designation.department.department_name if designation.department else '',
+            designation.designation_name,
+            designation.description,
+        ]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=designations.xlsx'
+
+    workbook.save(response)
+    return response
+
+
+def export_locations_to_excel(request):
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Locations'
+
+    columns = ['Sl.No', 'Location Name', 'Description']
+    row_num = 1
+
+   
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+   
+    for index, location in enumerate(Location.objects.all(), start=1):
+        row_num += 1
+        row = [
+            index,  
+            location.location_name,
+            location.description,
+        ]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=locations.xlsx'
+
+    workbook.save(response)
+    return response
+
+
+def export_employees_to_excel(request):
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Employees'
+
+  
+    columns = ['Sl.No', 'Employee No', 'Join Date', 'Name', 'Phone', 'Address', 
+               'Emp Start Date', 'Emp End Date', 'Status', 'Department', 'Designation', 'Location', 'Skills']
+
+  
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=1, column=col_num)
+        cell.value = column_title
+
+   
+    employees = Employee.objects.all()
+
+   
+    for index, employee in enumerate(employees, start=2):
+        skills = ', '.join([skill.skill_name for skill in employee.skills.all()])
+        row = [
+            index - 1, 
+            employee.emp_no,
+            employee.join_date.strftime('%Y-%m-%d'),
+            employee.name,
+            employee.phone,
+            employee.address,
+            employee.emp_start_date.strftime('%Y-%m-%d'),
+            employee.emp_end_date.strftime('%Y-%m-%d'),
+            employee.status,
+            employee.department.department_name if employee.department else '',  
+            employee.designation.designation_name if employee.designation else '',  
+            employee.location.location_name if employee.location else '', 
+            skills, 
+        ]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=index, column=col_num)
+            cell.value = cell_value
+
+   
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=employees.xlsx'
+
+ 
+    workbook.save(response)
+
+    return response

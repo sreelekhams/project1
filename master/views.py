@@ -12,6 +12,8 @@ from django.http import HttpResponse
 from datetime import datetime
 import openpyxl
 import os
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 # Create your views here.
 def indexpage(request):
@@ -699,7 +701,26 @@ def bulk_upload_loc(request):
         return redirect('location_list')
     
 
+def save_uploaded_file(uploaded_file, save_directory):
+    try:
+        print("kkkkkkkkkkk",uploaded_file)
+        # Ensure the save directory exists
+        file_name, uploaded_file = next(iter(uploaded_file.items()))
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)
 
+        # Construct the full path to save the file
+        save_path = os.path.join(save_directory, uploaded_file.name)
+        print(save_path,'save')
+        # Save the file to the specified directory
+        with default_storage.open(save_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+        print(f"File saved at {save_path}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def bulk_upload_emp(request):
@@ -707,6 +728,9 @@ def bulk_upload_emp(request):
         files = request.FILES.getlist('files')  # Accessing multiple files using getlist()
         print(files)
         photo_files = {file.name: file for file in files if file.name.endswith(('.png', '.jpg', '.jpeg'))} 
+        save_directory = 'employee_photos'
+
+        save_uploaded_file(photo_files, save_directory)
         print(photo_files,"photo_files") # Collect photo files
         errors = []
         for uploaded_file in files:
@@ -757,7 +781,7 @@ def bulk_upload_emp(request):
                         department=department,
                         designation=designation,
                         location=location,
-                        photo=photo_file
+                        photo='employee_photos'+'/'+photo_name
                     )
 
                     # Create associated skills
@@ -797,10 +821,10 @@ def export_departments_to_excel(request):
         cell.value = column_title
 
     
-    for index, department in Department.objects.all():
+    for index, department in enumerate(Department.objects.all(), start=1):
         row_num += 1
         row = [
-             index, 
+            index,  # Sl.No
             department.department_name,
             department.description,
         ]

@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <main id="main" class="main">
@@ -28,18 +29,30 @@
                       <div>
                         <h5 class="card-heading">List Of Employee</h5>
                       </div>
-                      <div class="ms-auto my-auto mt-lg-0 mt-4">
-                        <div class="ms-auto my-auto">
-                          <a href="{% url 'employee_add' %}">
-                            <button type="button" class="btn btn-success">
-                              <i class="bi bi-plus-circle me-1"></i> Add Employee
-                             
+                      <div class="ms-auto my-auto mt-lg-0 mt-4 d-flex">
+                        <div class="mr-2">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModal">
+                                Upload
                             </button>
-                          </a>
                         </div>
+                        <div class="mr-2">
+                          <a href="{% url 'export_employees' %}">
+                              <buttontype="submit" class="btn btn-primary">
+                                  Export 
+                              </button>
+                          </a>
                       </div>
+                       
+                        <div>
+                            <a href="{% url 'employee_add' %}">
+                                <button type="button" class="btn btn-success">
+                                    <i class="bi bi-plus-circle me-1"></i> Add Employee
+                                </button>
+                            </a>
+                        </div>
+                        </div>
                     </div>
-                  </div>
+</div>
                   <table
                     class="display responsive"
                     style="width: 100%"
@@ -127,6 +140,34 @@
         </section>
         <div class="spacex mb-5"></div>
       </main>
+
+      <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">Upload Excel File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  <form action="{% url 'bulk_upload_emp' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="files">Choose Excel files</label>
+                        <input type="file" id="files" name="files" class="form-control" multiple>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
      
 </body>
 </html>

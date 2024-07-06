@@ -14,6 +14,8 @@ import openpyxl
 import os
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 # Create your views here.
 def indexpage(request):
@@ -375,49 +377,49 @@ def designations(request):
     designations = Designation.objects.filter(department=department_id).all()
     return JsonResponse(list(designations.values('designation_id', 'designation_name')), safe=False)
 
-def employee_list(request):
-    # Write your raw SQL query
-    sql_query = """
-    SELECT 
-        e.employee_id,e.join_date, e.emp_no, e.name, e.phone, e.address, 
-        e.emp_start_date, e.emp_end_date,e.photo,e.status,
-        d.department_name, ds.designation_name, l.location_name
-    FROM master_employee e
-    LEFT JOIN master_department d ON e.department_id = d.department_id
-    LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
-    LEFT JOIN master_location l ON e.location_id = l.location_id;
-    """
+# def employee_list(request):
+#     # Write your raw SQL query
+#     sql_query = """
+#     SELECT 
+#         e.employee_id,e.join_date, e.emp_no, e.name, e.phone, e.address, 
+#         e.emp_start_date, e.emp_end_date,e.photo,e.status,
+#         d.department_name, ds.designation_name, l.location_name
+#     FROM master_employee e
+#     LEFT JOIN master_department d ON e.department_id = d.department_id
+#     LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
+#     LEFT JOIN master_location l ON e.location_id = l.location_id;
+#     """
     
    
-    with connection.cursor() as cursor:
-        cursor.execute(sql_query)
-        employees = cursor.fetchall()  # Fetch all rows
+#     with connection.cursor() as cursor:
+#         cursor.execute(sql_query)
+#         employees = cursor.fetchall()  # Fetch all rows
     
    
-    employee_list = []
-    for row in employees:
-        employee = {
-            'employee_id':row[0],
-            'join_date': row[1],
-            'emp_no': row[2],
-            'name': row[3],
-            'phone': row[4],
-            'address': row[5],
-            'emp_start_date': row[6],
-            'emp_end_date': row[7],
-            'photo':settings.MEDIA_URL + row[8],
-            'status':row[9],
-            'department_name': row[10],
-            'designation_name': row[11],
-            'location_name': row[12],
-        }
-        employee_list.append(employee)
+#     employee_list = []
+#     for row in employees:
+#         employee = {
+#             'employee_id':row[0],
+#             'join_date': row[1],
+#             'emp_no': row[2],
+#             'name': row[3],
+#             'phone': row[4],
+#             'address': row[5],
+#             'emp_start_date': row[6],
+#             'emp_end_date': row[7],
+#             'photo':settings.MEDIA_URL + row[8],
+#             'status':row[9],
+#             'department_name': row[10],
+#             'designation_name': row[11],
+#             'location_name': row[12],
+#         }
+#         employee_list.append(employee)
    
-    context = {
-        'employees': employee_list
-    }
+#     context = {
+#         'employees': employee_list
+#     }
     
-    return render(request, 'master/employee_list.html', context)
+#     return render(request, 'master/employee_list.html', context)
 
 @login_required(login_url='adlogin')
 def employee_edit(request, pk):
@@ -957,3 +959,100 @@ def export_employees_to_excel(request):
     workbook.save(response)
 
     return response
+
+
+def emp_list_query(start_index, page_length, search_value, draw):
+    script1 = ''' 
+    SELECT 
+        e.employee_id, e.join_date, e.emp_no, e.name, e.phone, e.address, 
+        e.emp_start_date, e.emp_end_date, e.photo, e.status,
+        d.department_name, ds.designation_name, l.location_name
+    FROM master_employee e
+    LEFT JOIN master_department d ON e.department_id = d.department_id
+    LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
+    LEFT JOIN master_location l ON e.location_id = l.location_id
+    WHERE e.name <> 'ALL'
+    '''
+    
+    script2 = ''' 
+    SELECT COUNT(*) FROM master_employee e
+    LEFT JOIN master_department d ON e.department_id = d.department_id
+    LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
+    LEFT JOIN master_location l ON e.location_id = l.location_id
+    WHERE e.name <> 'ALL'
+    '''
+    
+    if search_value:
+        search_script = " AND e.name LIKE %s"
+        script1 += search_script
+        script2 += search_script
+
+    script1 += " ORDER BY e.name ASC LIMIT %s OFFSET %s;"
+
+    with connection.cursor() as cursor:
+        if search_value:
+            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
+        else:
+            cursor.execute(script1, (int(page_length), int(start_index)))
+        employees = cursor.fetchall()
+
+        if search_value:
+            cursor.execute(script2, ('%' + search_value + '%',))
+        else:
+            cursor.execute(script2)
+        total_records = cursor.fetchone()[0]
+
+    employee_list = []
+    if start_index.isdigit():
+        sl_no = int(start_index) + 1
+    else:
+        sl_no = 1
+
+    for row in employees:
+        employee = {
+            'employee_id': row[0],
+            'join_date': row[1],
+            'emp_no': row[2],
+            'name': row[3],
+            'phone': row[4],
+            'address': row[5],
+            'emp_start_date': row[6],
+            'emp_end_date': row[7],
+            'photo': settings.MEDIA_URL + row[8],
+            'status': row[9],
+            'department_name': row[10],
+            'designation_name': row[11],
+            'location_name': row[12],
+        }
+        employee_list.append(employee)
+        sl_no += 1
+
+    filtered_records = total_records
+
+    response = {
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": filtered_records,
+        "data": employee_list
+    }
+    return response
+
+
+
+@login_required(login_url='adlogin')
+@csrf_exempt
+def employee_list(request):
+    if request.method == "GET":
+        template_name = 'master/employee_list.html'
+       
+        return render(request, template_name, )
+
+    if request.method == "POST":
+        start_index = request.POST.get('start')
+        page_length = request.POST.get('length')
+        search_value = request.POST.get('search[value]')
+        draw = request.POST.get('draw')
+       
+        emp = emp_list_query(start_index, page_length, search_value, draw)
+       
+        return JsonResponse(emp)

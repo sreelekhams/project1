@@ -57,7 +57,7 @@
                                 <thead>
                                     <tr>
                                         <th scope="col" class="text-md dt-nowrap">Sl.No</th>
-                                        
+                                        <th scope="col" class="text-md dt-nowrap">Action</th>
                                         <th scope="col" class="text-md dt-nowrap">Employee No</th>
                                         <th scope="col" class="text-md dt-nowrap">Name</th>
                                         <th scope="col" class="text-md dt-nowrap">Department</th>
@@ -109,7 +109,7 @@
         });
 
         function LoadTable() {
-            // Destroy the table if it already exists
+            // Check if DataTable is already initialized
             if ($.fn.DataTable.isDataTable('#myTable')) {
                 $('#myTable').DataTable().clear().destroy();
             }
@@ -135,16 +135,22 @@
                         $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
                     }
                 },
-              
                 "columns": [
                     { "data": null },
-                   
+                    {
+                        "data": function (row, type, val, meta) {
+                            var varButtons = "";
+                            varButtons += '<a href="' + window.location.origin + '/employee_edit/' + row.employee_id + '" class="me-1"><button type="button" class="btn btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" title="edit"><i class="bi bi-pencil-fill"></i></button></a>';
+                            varButtons += '<a href="' + window.location.origin + '/employee_detail/' + row.employee_id + '" class="me-1"><button type="button" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="detail"><i class="bi bi-info-circle"></i></button></a>';
+                            varButtons += '<a href="' + window.location.origin + '/employee_delete/' + row.employee_id + '" class="me-1"><button type="button" class="btn btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="delete"><i class="bi bi-trash"></i></button></a>';
+                            return varButtons;
+                        }
+                    },
                     { "data": "emp_no" },
                     { "data": "name" },
                     { "data": "department_name" },
                     { "data": "designation_name" }
                 ],
-               
                 "createdRow": function (row, data, dataIndex) {
                     // Add serial number to the first column
                     var table = $('#myTable').DataTable();

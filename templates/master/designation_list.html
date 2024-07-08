@@ -71,57 +71,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                        {% for d in designation_list %}
-                      <tr>
-                        <th scope="row">{{ forloop.counter }}</th>
-                        <td
-                          class="justify-content-center align-content-center"
-                          style="min-height: 100% !important; min-width: 100%"
-                        >
-                          <div class="d-flex">
-                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
-                            <a href="{% url 'designation_edit' d.designation_id %}">
-                              <button
-                                type="button"
-                                class="btn btn-outline-info"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="Edit"
-                              >
-                                <i class="bi bi-pencil-fill"></i>
-                              </button> </a
-                            >&nbsp;
-                            {% endif %}
-                            <a href="{% url 'designation_detail' d.designation_id %}">
-                              <button
-                                type="button"
-                                class="btn btn-outline-success"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="Details"
-                              >
-                                <i class="bi bi-eye-fill"></i>
-                              </button> </a
-                            >&nbsp;
-                            {% if request.user.role == 'Admin' or request.user.is_superuser %}
-                            <a href="{% url 'designation_delete' d.designation_id %}">
-                            <button
-                              type="button"
-                              class="btn btn-outline-danger"
-                              data-bs-toggle="modal"
-                              data-bs-target="#deleteModal"
-                              title="Delete"
-                            >
-                              <i class="bi bi-trash-fill"></i>
-                            </button>
-                            &nbsp;
-                            {% endif %}
-                          </div>
-                        </td>
-                        <td class="dt-nowrap">{{d.designation_name}}</td>
-                       
-                      </tr>
-                      {% endfor %}
+                        
                     </tbody>
                   </table>
                 </div>
@@ -158,6 +108,70 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+          console.log("Document ready, loading table...");
+          LoadTable();
+      });
+  
+      function LoadTable() {
+          // Check if DataTable is already initialized and destroy it
+          if ($.fn.DataTable.isDataTable('#myTable')) {
+              console.log("DataTable already initialized, destroying...");
+              $('#myTable').DataTable().clear().destroy();
+          }
+  
+          console.log("Initializing DataTable...");
+          $('#myTable').DataTable({
+              "destroy": true, // Ensure any existing instance is destroyed
+              "serverSide": true,
+              "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
+              "paging": true,
+              "ordering": false,
+              "pageLength": 10,
+              "sPaginationType": "full_numbers",
+              "scrollX": false,
+              "processing": true,
+              "language": { "processing": 'Loading......!' },
+              "ajax": {
+                  "url": "{% url 'designation_list' %}",
+                  "type": "POST",
+                  "dataType": "json",
+                  "data": function (d) {
+                      d.csrfmiddlewaretoken = '{{ csrf_token }}';
+                  },
+                  error: function (e) {
+                      $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
+                  }
+              },
+              "columns": [
+                  { "data": null },
+                  {
+                      "data": function (row, type, val, meta) {
+                          var varButtons = "";
+                          varButtons += '<a href="' + window.location.origin + '/designation_edit/' + row.designation_id + '" class="me-1"><button type="button" class="btn btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" title="edit"><i class="bi bi-pencil-fill"></i></button></a>';
+                          varButtons += '<a href="' + window.location.origin + '/designation_detail/' + row.designation_id + '" class="me-1"><button type="button" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="detail"><i class="bi bi-info-circle"></i></button></a>';
+                          varButtons += '<a href="' + window.location.origin + '/designation_delete/' + row.designation_id + '" class="me-1"><button type="button" class="btn btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="delete"><i class="bi bi-trash"></i></button></a>';
+                          return varButtons;
+                      }
+                  },
+                  { "data": "designation_name" },
+              ],
+              "createdRow": function (row, data, dataIndex) {
+                  // Add serial number to the first column
+                  var table = $('#myTable').DataTable();
+                  var pageInfo = table.page.info();
+                  var serialNumber = (pageInfo.page * pageInfo.length) + (dataIndex + 1);
+                  $('td:eq(0)', row).html(serialNumber);
+              },
+              "drawCallback": function () {
+                  $('#myTable_paginate ul.pagination').addClass("pagination-rounded");
+              }
+          });
+      }
+  </script>
+  
 </body>
 </html>
 {% endblock %}

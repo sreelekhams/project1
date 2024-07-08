@@ -118,22 +118,22 @@ def department_edit(request, pk):
     else:
         return render(request, template_name, context)
     
-@login_required(login_url='adlogin')
-def department_list(request):
-    # Write your raw SQL query
-    sql_query = "SELECT * FROM master_department;"
+# @login_required(login_url='adlogin')
+# def department_list(request):
+#     # Write your raw SQL query
+#     sql_query = "SELECT * FROM master_department;"
     
-    # Execute the query
-    with connection.cursor() as cursor:
-        cursor.execute(sql_query)
-        departments = cursor.fetchall()  # Fetch all rows
+#     # Execute the query
+#     with connection.cursor() as cursor:
+#         cursor.execute(sql_query)
+#         departments = cursor.fetchall()  # Fetch all rows
    
-    # Process the results
-    context = {
-        'departments': departments
-    }
+#     # Process the results
+#     context = {
+#         'departments': departments
+#     }
     
-    return render(request, 'master/department_list.html', context)
+#     return render(request, 'master/department_list.html', context)
 
 
 @login_required(login_url='adlogin')
@@ -204,36 +204,36 @@ def designation_edit(request, pk):
     else:
         return render(request, template_name, context)
 @login_required(login_url='adlogin')    
-def designation_list(request):
+# def designation_list(request):
    
-    sql_query = """
-        SELECT d.designation_id, d.designation_name, d.description, dep.department_name
-        FROM master_designation d
-        LEFT JOIN master_department dep ON d.department_id = dep.department_id;
-    """
+#     sql_query = """
+#         SELECT d.designation_id, d.designation_name, d.description, dep.department_name
+#         FROM master_designation d
+#         LEFT JOIN master_department dep ON d.department_id = dep.department_id;
+#     """
     
    
-    with connection.cursor() as cursor:
-        cursor.execute(sql_query)
-        designations = cursor.fetchall()  # Fetch all rows
+#     with connection.cursor() as cursor:
+#         cursor.execute(sql_query)
+#         designations = cursor.fetchall()  # Fetch all rows
 
    
-    designation_list = [
-        {
-            'designation_id': row[0],
-            'designation_name': row[1],
-            'description': row[2],
-            'department_name': row[3]
-        }
-        for row in designations
-    ]
-    print(designation_list,"designation_list")
+#     designation_list = [
+#         {
+#             'designation_id': row[0],
+#             'designation_name': row[1],
+#             'description': row[2],
+#             'department_name': row[3]
+#         }
+#         for row in designations
+#     ]
+#     print(designation_list,"designation_list")
    
-    context = {
-        'designation_list': designation_list
-    }
+#     context = {
+#         'designation_list': designation_list
+#     }
     
-    return render(request, 'master/designation_list.html', context)
+#     return render(request, 'master/designation_list.html', context)
 
 @login_required(login_url='adlogin')
 def designation_detail(request,pk):
@@ -280,22 +280,23 @@ def location_add(request):
     else :
         print("Rendering form")
         return render(request, template_name, context)
-@login_required(login_url='adlogin')
-def location_list(request):
+    
+# @login_required(login_url='adlogin')
+# def location_list(request):
    
-    sql_query = "SELECT * FROM master_location;"
+#     sql_query = "SELECT * FROM master_location;"
     
    
-    with connection.cursor() as cursor:
-        cursor.execute(sql_query)
-        location = cursor.fetchall()  
-    print(location,"departments")
+#     with connection.cursor() as cursor:
+#         cursor.execute(sql_query)
+#         location = cursor.fetchall()  
+#     print(location,"departments")
    
-    context = {
-        'location': location
-    }
+#     context = {
+#         'location': location
+#     }
     
-    return render(request, 'master/location_list.html', context)
+#     return render(request, 'master/location_list.html', context)
 
 
 @login_required(login_url='adlogin')
@@ -1056,3 +1057,242 @@ def employee_list(request):
         emp = emp_list_query(start_index, page_length, search_value, draw)
        
         return JsonResponse(emp)
+    
+
+
+def department_list_query(start_index, page_length, search_value, draw):
+    script1 = ''' 
+    SELECT 
+        d.department_id, d.department_name, d.description
+    FROM master_department d
+    WHERE d.department_name <> 'ALL'
+    '''
+    
+    script2 = ''' 
+    SELECT COUNT(*) FROM master_department d
+    WHERE d.department_name <> 'ALL'
+    '''
+    
+    if search_value:
+        search_script = " AND d.department_name LIKE %s"
+        script1 += search_script
+        script2 += search_script
+
+    script1 += " ORDER BY d.department_name ASC LIMIT %s OFFSET %s;"
+
+    with connection.cursor() as cursor:
+        if search_value:
+            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
+        else:
+            cursor.execute(script1, (int(page_length), int(start_index)))
+        departments = cursor.fetchall()
+
+        if search_value:
+            cursor.execute(script2, ('%' + search_value + '%',))
+        else:
+            cursor.execute(script2)
+        total_records = cursor.fetchone()[0]
+
+    department_list = []
+    if start_index.isdigit():
+        sl_no = int(start_index) + 1
+    else:
+        sl_no = 1
+
+    for row in departments:
+        department = {
+            'department_id': row[0],
+            'department_name': row[1],
+            'description': row[2]
+        }
+        department_list.append(department)
+        sl_no += 1
+
+    filtered_records = total_records
+
+    response = {
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": filtered_records,
+        "data": department_list
+    }
+    return response
+
+
+@login_required(login_url='adlogin')
+@csrf_exempt
+def department_list(request):
+    if request.method == "GET":
+        template_name = 'master/department_list.html'
+       
+        return render(request, template_name, )
+
+    if request.method == "POST":
+        start_index = request.POST.get('start')
+        page_length = request.POST.get('length')
+        search_value = request.POST.get('search[value]')
+        draw = request.POST.get('draw')
+       
+        dep = department_list_query(start_index, page_length, search_value, draw)
+       
+        return JsonResponse(dep)
+    
+
+    
+def location_list_query(start_index, page_length, search_value, draw):
+    script1 = ''' 
+    SELECT 
+        l.location_id, l.location_name, l.description
+    FROM master_location l
+    WHERE l.location_name <> 'ALL'
+    '''
+    
+    script2 = ''' 
+    SELECT COUNT(*) FROM master_location l
+    WHERE l.location_name <> 'ALL'
+    '''
+    
+    if search_value:
+        search_script = " AND l.location_name LIKE %s"
+        script1 += search_script
+        script2 += search_script
+
+    script1 += " ORDER BY l.location_name ASC LIMIT %s OFFSET %s;"
+
+    with connection.cursor() as cursor:
+        if search_value:
+            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
+        else:
+            cursor.execute(script1, (int(page_length), int(start_index)))
+        locations = cursor.fetchall()
+
+        if search_value:
+            cursor.execute(script2, ('%' + search_value + '%',))
+        else:
+            cursor.execute(script2)
+        total_records = cursor.fetchone()[0]
+
+    location_list = []
+    if start_index.isdigit():
+        sl_no = int(start_index) + 1
+    else:
+        sl_no = 1
+
+    for row in locations:
+        location = {
+            'location_id': row[0],
+            'location_name': row[1],
+            'description': row[2]
+        }
+        location_list.append(location)
+        sl_no += 1
+
+    filtered_records = total_records
+
+    response = {
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": filtered_records,
+        "data": location_list
+    }
+    return response
+
+
+@login_required(login_url='adlogin')
+@csrf_exempt
+def location_list(request):
+    if request.method == "GET":
+        template_name = 'master/location_list.html'
+       
+        return render(request, template_name, )
+
+    if request.method == "POST":
+        start_index = request.POST.get('start')
+        page_length = request.POST.get('length')
+        search_value = request.POST.get('search[value]')
+        draw = request.POST.get('draw')
+       
+        loc = location_list_query(start_index, page_length, search_value, draw)
+       
+        return JsonResponse(loc)
+
+def designation_list_query(start_index, page_length, search_value, draw):
+    script1 = ''' 
+    SELECT 
+        ds.designation_id, ds.designation_name, ds.description, 
+        d.department_name
+    FROM master_designation ds
+    LEFT JOIN master_department d ON ds.department_id = d.department_id
+    WHERE ds.designation_name <> 'ALL'
+    '''
+    
+    script2 = ''' 
+    SELECT COUNT(*) FROM master_designation ds
+    LEFT JOIN master_department d ON ds.department_id = d.department_id
+    WHERE ds.designation_name <> 'ALL'
+    '''
+    
+    if search_value:
+        search_script = " AND ds.designation_name LIKE %s"
+        script1 += search_script
+        script2 += search_script
+
+    script1 += " ORDER BY ds.designation_name ASC LIMIT %s OFFSET %s;"
+
+    with connection.cursor() as cursor:
+        if search_value:
+            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
+        else:
+            cursor.execute(script1, (int(page_length), int(start_index)))
+        designations = cursor.fetchall()
+
+        if search_value:
+            cursor.execute(script2, ('%' + search_value + '%',))
+        else:
+            cursor.execute(script2)
+        total_records = cursor.fetchone()[0]
+
+    designation_list = []
+    if start_index.isdigit():
+        sl_no = int(start_index) + 1
+    else:
+        sl_no = 1
+
+    for row in designations:
+        designation = {
+            'designation_id': row[0],
+            'designation_name': row[1],
+            'description': row[2],
+            'department_name': row[3]
+        }
+        designation_list.append(designation)
+        sl_no += 1
+
+    filtered_records = total_records
+
+    response = {
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": filtered_records,
+        "data": designation_list
+    }
+    return response
+
+
+@login_required(login_url='adlogin')
+@csrf_exempt
+def designation_list(request):
+    if request.method == "GET":
+        template_name = 'master/designation_list.html'
+       
+        return render(request, template_name, )
+
+    if request.method == "POST":
+        start_index = request.POST.get('start')
+        page_length = request.POST.get('length')
+        search_value = request.POST.get('search[value]')
+        draw = request.POST.get('draw')
+       
+        des = designation_list_query(start_index, page_length, search_value, draw)
+       
+        return JsonResponse(des)

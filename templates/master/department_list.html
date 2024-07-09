@@ -53,7 +53,7 @@
                                     </div>
                                 </div>
                                
-                            <table class="display responsive" style="width: 100%" id="myTable">
+                            <table class="display responsive" style="width: 100%" id="depTable">
                                 <thead>
                                     <tr>
                                         <th scope="col" class="text-md dt-nowrap">Sl.No</th>
@@ -97,32 +97,33 @@
     </div>
 
     <!-- Include Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 
     <script>
         $(document).ready(function () {
+            $("#depTable").dataTable().fnDestroy();
             LoadTable();
         });
 
         function LoadTable() {
             // Check if DataTable is already initialized
-            if ($.fn.DataTable.isDataTable('#myTable')) {
-                $('#myTable').DataTable().clear().destroy();
-            }
+           
+            
 
-            $('#myTable').DataTable({
-                "serverSide": true,
-                "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
-                "paging": true,
-                "ordering": false,
-                "pageLength": 10,
-                "sPaginationType": "full_numbers",
-                "scrollX": false,
-                "processing": true,
-                "language": { "processing": 'Loading......!' },
+            $('#depTable').DataTable({
+               "serverSide": true,
+            "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
+            "paging": true,
+            "ordering":false,
+            "pageLength": 10,
+            "sPaginationType": "full_numbers",
+            "scrollX": false,
+            "destroy": true,
+            "processing": true,
+            "language": { "processing": 'Loading......!' },
                 "ajax": {
                     "url": "{% url 'department_list' %}",
                     "type": "POST",
@@ -131,11 +132,11 @@
                         d.csrfmiddlewaretoken = '{{ csrf_token }}';
                     },
                     error: function (e) {
-                        $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
+                        $("#depTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
                     }
                 },
                 "columns": [
-                    { "data": null },
+                    { "data": "sl_no" },
                     {
                         "data": function (row, type, val, meta) {
                             var varButtons = "";
@@ -149,15 +150,9 @@
                     { "data": "department_name" },
                    
                 ],
-                "createdRow": function (row, data, dataIndex) {
-                    // Add serial number to the first column
-                    var table = $('#myTable').DataTable();
-                    var pageInfo = table.page.info();
-                    var serialNumber = (pageInfo.page * pageInfo.length) + (dataIndex + 1);
-                    $('td:eq(0)', row).html(serialNumber);
-                },
+               
                 "drawCallback": function () {
-                    $('#myTable_paginate ul.pagination').addClass("pagination-rounded");
+                    $('#depTable_paginate ul.pagination').addClass("pagination-rounded");
                 }
             });
         }

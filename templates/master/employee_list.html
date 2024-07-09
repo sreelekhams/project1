@@ -53,7 +53,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <table class="display responsive nowrap" style="width: 100%" id="myTable">
+                            <table class="display responsive nowrap" style="width: 100%" id="empTable">
                                 <thead>
                                     <tr>
                                         <th scope="col" class="text-md dt-nowrap">Sl.No</th>
@@ -110,11 +110,11 @@
 
         function LoadTable() {
             // Check if DataTable is already initialized
-            if ($.fn.DataTable.isDataTable('#myTable')) {
-                $('#myTable').DataTable().clear().destroy();
+            if ($.fn.DataTable.isDataTable('#empTable')) {
+                $('#empTable').DataTable().clear().destroy();
             }
 
-            $('#myTable').DataTable({
+            $('#empTable').DataTable({
                 "serverSide": true,
                 "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
                 "paging": true,
@@ -136,7 +136,7 @@
                     }
                 },
                 "columns": [
-                    { "data": null },
+                    { "data": "sl_no" },
                     {
                         "data": function (row, type, val, meta) {
                             var varButtons = "";
@@ -151,15 +151,9 @@
                     { "data": "department_name" },
                     { "data": "designation_name" }
                 ],
-                "createdRow": function (row, data, dataIndex) {
-                    // Add serial number to the first column
-                    var table = $('#myTable').DataTable();
-                    var pageInfo = table.page.info();
-                    var serialNumber = (pageInfo.page * pageInfo.length) + (dataIndex + 1);
-                    $('td:eq(0)', row).html(serialNumber);
-                },
+              
                 "drawCallback": function () {
-                    $('#myTable_paginate ul.pagination').addClass("pagination-rounded");
+                    $('#empTable_paginate ul.pagination').addClass("pagination-rounded");
                 }
             });
         }

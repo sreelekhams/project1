@@ -35,11 +35,13 @@ urlpatterns = [
     path('bulk_upload_dep/', views.bulk_upload_dep, name='bulk_upload_dep'),
     path('bulk_upload_des/', views.bulk_upload_des, name='bulk_upload_des'),
     path('bulk_upload_loc/', views.bulk_upload_loc, name='bulk_upload_loc'),
+    path('bulk_upload_user/', views.bulk_upload_user, name='bulk_upload_user'),
     path('bulk_upload_emp/', views.bulk_upload_emp, name='bulk_upload_emp'),
     path('export_departments', views.export_departments_to_excel, name='export_departments'),
     path('export_designations', views.export_designations_to_excel, name='export_designations'),
     path('export_locations', views.export_locations_to_excel, name='export_locations'),
     path('export_employees', views.export_employees_to_excel, name='export_employees'),
+     path('export_user', views.export_users, name='export_user'),
    
     
     ]

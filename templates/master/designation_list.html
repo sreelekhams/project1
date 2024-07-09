@@ -57,7 +57,7 @@
                   <table
                     class="display responsive"
                     style="width: 100%"
-                    id="myTable"
+                    id="desTable"
                   >
                     <thead>
                       <tr>
@@ -109,22 +109,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
+
     <script>
       $(document).ready(function () {
-          console.log("Document ready, loading table...");
           LoadTable();
       });
-  
+
       function LoadTable() {
-          // Check if DataTable is already initialized and destroy it
-          if ($.fn.DataTable.isDataTable('#myTable')) {
-              console.log("DataTable already initialized, destroying...");
-              $('#myTable').DataTable().clear().destroy();
+          // Check if DataTable is already initialized
+          if ($.fn.DataTable.isDataTable('#desTable')) {
+              $('#desTable').DataTable().clear().destroy();
           }
-  
-          console.log("Initializing DataTable...");
-          $('#myTable').DataTable({
-              "destroy": true, // Ensure any existing instance is destroyed
+          else {
+          $('#desTable').DataTable({
+            "destroy": true, 
+
               "serverSide": true,
               "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
               "paging": true,
@@ -142,11 +141,11 @@
                       d.csrfmiddlewaretoken = '{{ csrf_token }}';
                   },
                   error: function (e) {
-                      $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
+                      $("#desTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
                   }
               },
               "columns": [
-                  { "data": null },
+                  { "data": "sl_no" },
                   {
                       "data": function (row, type, val, meta) {
                           var varButtons = "";
@@ -156,22 +155,20 @@
                           return varButtons;
                       }
                   },
+                
                   { "data": "designation_name" },
+                 
               ],
-              "createdRow": function (row, data, dataIndex) {
-                  // Add serial number to the first column
-                  var table = $('#myTable').DataTable();
-                  var pageInfo = table.page.info();
-                  var serialNumber = (pageInfo.page * pageInfo.length) + (dataIndex + 1);
-                  $('td:eq(0)', row).html(serialNumber);
-              },
+             
               "drawCallback": function () {
-                  $('#myTable_paginate ul.pagination').addClass("pagination-rounded");
+                  $('#desTable_paginate ul.pagination').addClass("pagination-rounded");
               }
           });
+         
+
+        }
       }
   </script>
-  
 </body>
 </html>
 {% endblock %}

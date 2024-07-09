@@ -56,7 +56,7 @@
                   <table
                     class="display responsive"
                     style="width: 100%"
-                    id="myTable"
+                    id="locTable"
                   >
                     <thead>
                       <tr>
@@ -116,12 +116,12 @@
 
       function LoadTable() {
           // Check if DataTable is already initialized
-          if ($.fn.DataTable.isDataTable('#myTable')) {
-              $('#myTable').DataTable().clear().destroy();
+          if ($.fn.DataTable.isDataTable('#locTable')) {
+              $('#locTable').DataTable().clear().destroy();
           }
 
       
-          $('#myTable').DataTable({
+          $('#locTable').DataTable({
               "serverSide": true,
               "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
               "paging": true,
@@ -139,11 +139,11 @@
                       d.csrfmiddlewaretoken = '{{ csrf_token }}';
                   },
                   error: function (e) {
-                      $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
+                      $("#locTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
                   }
               },
               "columns": [
-                  { "data": null },
+                  { "data": "sl_no" },
                   {
                       "data": function (row, type, val, meta) {
                           var varButtons = "";
@@ -157,15 +157,9 @@
                   { "data": "location_name" },
                  
               ],
-              "createdRow": function (row, data, dataIndex) {
-                  // Add serial number to the first column
-                  var table = $('#myTable').DataTable();
-                  var pageInfo = table.page.info();
-                  var serialNumber = (pageInfo.page * pageInfo.length) + (dataIndex + 1);
-                  $('td:eq(0)', row).html(serialNumber);
-              },
+             
               "drawCallback": function () {
-                  $('#myTable_paginate ul.pagination').addClass("pagination-rounded");
+                  $('#locTable_paginate ul.pagination').addClass("pagination-rounded");
               }
           });
       }

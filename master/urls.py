@@ -41,7 +41,10 @@ urlpatterns = [
     path('export_designations', views.export_designations_to_excel, name='export_designations'),
     path('export_locations', views.export_locations_to_excel, name='export_locations'),
     path('export_employees', views.export_employees_to_excel, name='export_employees'),
-     path('export_user', views.export_users, name='export_user'),
+    path('export_user', views.export_users, name='export_user'),
+    path('download_employee_pdf/<str:employee_id>/', views.download_employee_pdf, name='download_employee_pdf'),
+    path('send_pdf/', views.send_pdf, name='send_pdf'),
+
    
     
     ]

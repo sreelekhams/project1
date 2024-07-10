@@ -12,10 +12,24 @@ from django.http import HttpResponse
 from datetime import datetime
 import openpyxl
 import os
+from master.forms import *
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from master.databsequery import *
+import logging
+from django.core.mail import EmailMessage
+import threading
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from io import BytesIO
+from django.core.mail import EmailMessage, BadHeaderError
+import logging
+logger = logging.getLogger(__name__)
+
+
+
 
 # Create your views here.
 def indexpage(request):
@@ -514,22 +528,24 @@ def user_add(request):
         return render(request, template_name, context)
     
 
-
+@login_required(login_url='adlogin')
+@csrf_exempt
 def user_list(request):
-   
-    sql_query = "SELECT * FROM master_user;"
-    
-   
-    with connection.cursor() as cursor:
-        cursor.execute(sql_query)
-        user = cursor.fetchall()  
-    
-   
-    context = {
-        'user': user
-    }
-    
-    return render(request, 'accounts/user_list.html', context)
+    if request.method == "GET":
+        template_name = 'accounts/user_list.html'
+       
+        return render(request, template_name, )
+
+    if request.method == "POST":
+       
+        start_index = request.POST.get('start')
+        page_length = request.POST.get('length')
+        search_value = request.POST.get('search[value]')
+        draw = request.POST.get('draw')
+       
+        des = user_list_query(start_index, page_length, search_value, draw)
+       
+        return JsonResponse(des)
 
 
 @login_required(login_url='adlogin')
@@ -704,10 +720,37 @@ def bulk_upload_loc(request):
         return redirect('location_list')
     
 
+def bulk_upload_user(request):
+   
+    if request.method == 'POST':
+       
+        data = handle_uploaded_file(request.FILES['file'])
+      
+        for row in data:
+            username=row[0]
+            email=row[1] 
+            first_name=row[2]
+            last_name=row[3] 
+            password=row[4] 
+            role =row[5]
+            
+            if not User.objects.filter(username=username).exists():
+                User.objects.create( username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    role=role,
+                    password= make_password(password))
+                
+            else:
+                # Log the username that already exists
+                logging.warning(f"Username {username} already exists. Skipping this entry.")
+        return redirect('user_list')
+    
+
 def save_uploaded_file(uploaded_file, save_directory):
     try:
-        print("kkkkkkkkkkk",uploaded_file)
-        # Ensure the save directory exists
+      
         file_name, uploaded_file = next(iter(uploaded_file.items()))
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)
@@ -755,7 +798,7 @@ def bulk_upload_emp(request):
                     photo_name  = row[11]
                     skills_data = row[12:]  # Assuming skills data starts from the 12th column onwards
 
-                    # Check if the employee already exists
+                  
                     employee_exists = Employee.objects.filter(emp_no=emp_no).exists()
                     if employee_exists:
                         raise ValueError(f'Employee with Employee No. {emp_no} already exists.')
@@ -962,82 +1005,41 @@ def export_employees_to_excel(request):
     return response
 
 
-def emp_list_query(start_index, page_length, search_value, draw):
-    script1 = ''' 
-    SELECT 
-        e.employee_id, e.join_date, e.emp_no, e.name, e.phone, e.address, 
-        e.emp_start_date, e.emp_end_date, e.photo, e.status,
-        d.department_name, ds.designation_name, l.location_name
-    FROM master_employee e
-    LEFT JOIN master_department d ON e.department_id = d.department_id
-    LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
-    LEFT JOIN master_location l ON e.location_id = l.location_id
-    WHERE e.name <> 'ALL'
-    '''
-    
-    script2 = ''' 
-    SELECT COUNT(*) FROM master_employee e
-    LEFT JOIN master_department d ON e.department_id = d.department_id
-    LEFT JOIN master_designation ds ON e.designation_id = ds.designation_id
-    LEFT JOIN master_location l ON e.location_id = l.location_id
-    WHERE e.name <> 'ALL'
-    '''
-    
-    if search_value:
-        search_script = " AND e.name LIKE %s"
-        script1 += search_script
-        script2 += search_script
+def export_users(request):
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Users'
 
-    script1 += " ORDER BY e.name ASC LIMIT %s OFFSET %s;"
+   
+    columns = ['Sl.No', 'Username', 'Email', 'First Name', 'Last Name']
+    row_num = 1
 
-    with connection.cursor() as cursor:
-        if search_value:
-            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
-        else:
-            cursor.execute(script1, (int(page_length), int(start_index)))
-        employees = cursor.fetchall()
+  
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
 
-        if search_value:
-            cursor.execute(script2, ('%' + search_value + '%',))
-        else:
-            cursor.execute(script2)
-        total_records = cursor.fetchone()[0]
+   
+    for index, user in enumerate(User.objects.all(), start=1):
+        row_num += 1
+        row = [
+            index,
+            user.username,
+            user.email,
+            user.first_name,
+            user.last_name,
+        ]
 
-    employee_list = []
-    if start_index.isdigit():
-        sl_no = int(start_index) + 1
-    else:
-        sl_no = 1
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
 
-    for row in employees:
-        employee = {
-            'employee_id': row[0],
-            'join_date': row[1],
-            'emp_no': row[2],
-            'name': row[3],
-            'phone': row[4],
-            'address': row[5],
-            'emp_start_date': row[6],
-            'emp_end_date': row[7],
-            'photo': settings.MEDIA_URL + row[8],
-            'status': row[9],
-            'department_name': row[10],
-            'designation_name': row[11],
-            'location_name': row[12],
-        }
-        employee_list.append(employee)
-        sl_no += 1
+   
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=users.xlsx'
 
-    filtered_records = total_records
-
-    response = {
-        "draw": draw,
-        "recordsTotal": total_records,
-        "recordsFiltered": filtered_records,
-        "data": employee_list
-    }
+    workbook.save(response)
     return response
-
 
 
 @login_required(login_url='adlogin')
@@ -1060,63 +1062,7 @@ def employee_list(request):
     
 
 
-def department_list_query(start_index, page_length, search_value, draw):
-    script1 = ''' 
-    SELECT 
-        d.department_id, d.department_name, d.description
-    FROM master_department d
-    WHERE d.department_name <> 'ALL'
-    '''
-    
-    script2 = ''' 
-    SELECT COUNT(*) FROM master_department d
-    WHERE d.department_name <> 'ALL'
-    '''
-    
-    if search_value:
-        search_script = " AND d.department_name LIKE %s"
-        script1 += search_script
-        script2 += search_script
 
-    script1 += " ORDER BY d.department_name ASC LIMIT %s OFFSET %s;"
-
-    with connection.cursor() as cursor:
-        if search_value:
-            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
-        else:
-            cursor.execute(script1, (int(page_length), int(start_index)))
-        departments = cursor.fetchall()
-
-        if search_value:
-            cursor.execute(script2, ('%' + search_value + '%',))
-        else:
-            cursor.execute(script2)
-        total_records = cursor.fetchone()[0]
-
-    department_list = []
-    if start_index.isdigit():
-        sl_no = int(start_index) + 1
-    else:
-        sl_no = 1
-
-    for row in departments:
-        department = {
-            'department_id': row[0],
-            'department_name': row[1],
-            'description': row[2]
-        }
-        department_list.append(department)
-        sl_no += 1
-
-    filtered_records = total_records
-
-    response = {
-        "draw": draw,
-        "recordsTotal": total_records,
-        "recordsFiltered": filtered_records,
-        "data": department_list
-    }
-    return response
 
 
 @login_required(login_url='adlogin')
@@ -1139,63 +1085,7 @@ def department_list(request):
     
 
     
-def location_list_query(start_index, page_length, search_value, draw):
-    script1 = ''' 
-    SELECT 
-        l.location_id, l.location_name, l.description
-    FROM master_location l
-    WHERE l.location_name <> 'ALL'
-    '''
-    
-    script2 = ''' 
-    SELECT COUNT(*) FROM master_location l
-    WHERE l.location_name <> 'ALL'
-    '''
-    
-    if search_value:
-        search_script = " AND l.location_name LIKE %s"
-        script1 += search_script
-        script2 += search_script
 
-    script1 += " ORDER BY l.location_name ASC LIMIT %s OFFSET %s;"
-
-    with connection.cursor() as cursor:
-        if search_value:
-            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
-        else:
-            cursor.execute(script1, (int(page_length), int(start_index)))
-        locations = cursor.fetchall()
-
-        if search_value:
-            cursor.execute(script2, ('%' + search_value + '%',))
-        else:
-            cursor.execute(script2)
-        total_records = cursor.fetchone()[0]
-
-    location_list = []
-    if start_index.isdigit():
-        sl_no = int(start_index) + 1
-    else:
-        sl_no = 1
-
-    for row in locations:
-        location = {
-            'location_id': row[0],
-            'location_name': row[1],
-            'description': row[2]
-        }
-        location_list.append(location)
-        sl_no += 1
-
-    filtered_records = total_records
-
-    response = {
-        "draw": draw,
-        "recordsTotal": total_records,
-        "recordsFiltered": filtered_records,
-        "data": location_list
-    }
-    return response
 
 
 @login_required(login_url='adlogin')
@@ -1216,69 +1106,6 @@ def location_list(request):
        
         return JsonResponse(loc)
 
-def designation_list_query(start_index, page_length, search_value, draw):
-    script1 = ''' 
-    SELECT 
-        ds.designation_id, ds.designation_name, ds.description, 
-        d.department_name
-    FROM master_designation ds
-    LEFT JOIN master_department d ON ds.department_id = d.department_id
-    WHERE ds.designation_name <> 'ALL'
-    '''
-    
-    script2 = ''' 
-    SELECT COUNT(*) FROM master_designation ds
-    LEFT JOIN master_department d ON ds.department_id = d.department_id
-    WHERE ds.designation_name <> 'ALL'
-    '''
-    
-    if search_value:
-        search_script = " AND ds.designation_name LIKE %s"
-        script1 += search_script
-        script2 += search_script
-
-    script1 += " ORDER BY ds.designation_name ASC LIMIT %s OFFSET %s;"
-
-    with connection.cursor() as cursor:
-        if search_value:
-            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
-        else:
-            cursor.execute(script1, (int(page_length), int(start_index)))
-        designations = cursor.fetchall()
-
-        if search_value:
-            cursor.execute(script2, ('%' + search_value + '%',))
-        else:
-            cursor.execute(script2)
-        total_records = cursor.fetchone()[0]
-
-    designation_list = []
-    if start_index.isdigit():
-        sl_no = int(start_index) + 1
-    else:
-        sl_no = 1
-
-    for row in designations:
-        designation = {
-            'designation_id': row[0],
-            'designation_name': row[1],
-            'description': row[2],
-            'department_name': row[3]
-        }
-        designation_list.append(designation)
-        sl_no += 1
-
-    filtered_records = total_records
-
-    response = {
-        "draw": draw,
-        "recordsTotal": total_records,
-        "recordsFiltered": filtered_records,
-        "data": designation_list
-    }
-    return response
-
-
 @login_required(login_url='adlogin')
 @csrf_exempt
 def designation_list(request):
@@ -1296,3 +1123,114 @@ def designation_list(request):
         des = designation_list_query(start_index, page_length, search_value, draw)
        
         return JsonResponse(des)
+    
+def generate_employee_pdf(employee_id):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    employee = Employee.objects.get(employee_id=employee_id)
+
+    # Add a heading with a larger font
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(100, height - 50, "Employee Details")
+
+    # Draw a line below the heading
+  
+
+    # Add a box around the employee details section
+    # p.setStrokeColorRGB(0.2, 0.5, 0.3)
+    # p.setLineWidth(2)
+    # p.rect(50, height - 420, width - 100, 350, stroke=1, fill=0)
+
+    # Add employee details with a slightly larger font for labels
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(70, height - 90, "Employee Name:")
+    p.drawString(70, height - 110, "Employee Number:")
+    p.drawString(70, height - 130, "Join Date:")
+    p.drawString(70, height - 150, "Phone:")
+    p.drawString(70, height - 170, "Address:")
+    p.drawString(70, height - 190, "Start Date:")
+    p.drawString(70, height - 210, "End Date:")
+    p.drawString(70, height - 230, "Status:")
+    p.drawString(70, height - 250, "Department:")
+    p.drawString(70, height - 270, "Designation:")
+    p.drawString(70, height - 290, "Location:")
+
+    # Add employee data with regular font
+    p.setFont("Helvetica", 12)
+    p.drawString(200, height - 90, str(employee.name))
+    p.drawString(200, height - 110, str(employee.emp_no))
+    p.drawString(200, height - 130, str(employee.join_date))
+    p.drawString(200, height - 150, str(employee.phone))
+    p.drawString(200, height - 170, str(employee.address))
+    p.drawString(200, height - 190, str(employee.emp_start_date))
+    p.drawString(200, height - 210, str(employee.emp_end_date) if employee.emp_end_date else 'N/A')
+    p.drawString(200, height - 230, str(employee.status))
+    p.drawString(200, height - 250, str(employee.department))
+    p.drawString(200, height - 270, str(employee.designation))
+    p.drawString(200, height - 290, str(employee.location))
+
+    # Add employee photo with a label
+    if employee.photo:
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(70, height - 320, "Employee Photo:")
+        p.drawImage(employee.photo.path, 200, height - 440, width=100, preserveAspectRatio=True)
+       
+
+    # Footer
+    p.setFont("Helvetica-Oblique", 10)
+    p.drawString(70, 50, "Generated by datahub technologies")
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+
+def download_employee_pdf(request, employee_id):
+    employee = get_object_or_404(Employee, employee_id=employee_id)
+    buffer = generate_employee_pdf(employee_id)
+
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{employee.name}_details.pdf"'
+    return response
+
+
+
+def send_pdf(request):
+    if request.method == 'POST':
+        employee_id = request.POST.get('employee_id')
+       
+        recipient_email = request.POST.get('email')
+      
+        employee = Employee.objects.get(employee_id=employee_id)
+       
+        pdf = generate_employee_pdf(employee_id)
+       
+
+        email = EmailMessage(
+            subject=f'Employee Details for {employee.name}',
+            body='Please find attached the employee details.',
+            to=[recipient_email]
+        )
+       
+        email.attach(f'{employee.name}_details.pdf', pdf, 'application/pdf')
+       
+        try:
+            email.send()
+           
+            logger.info(f"Email sent successfully to {recipient_email}")
+            return JsonResponse({'status': 'success'})
+        except BadHeaderError:
+            logger.error("Invalid header found.")
+            return JsonResponse({'status': 'error', 'message': 'Invalid header found.'}, status=400)
+        except Exception as e:
+            logger.error(f"Failed to send email: {e}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

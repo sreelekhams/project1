@@ -27,6 +27,8 @@ from io import BytesIO
 from django.core.mail import EmailMessage, BadHeaderError
 import logging
 logger = logging.getLogger(__name__)
+from django.contrib import messages
+import uuid
 
 
 
@@ -98,7 +100,7 @@ def department_add(request):
             data.created_by =User.objects.get(id=request.user.id)
             data.save()
            
-          
+            messages.success(request, 'Department Successfully added.', 'alert-success')
             return redirect('department_list')
             
         else:
@@ -114,7 +116,16 @@ def department_add(request):
 @login_required(login_url='adlogin')    
 def department_edit(request, pk):
     template_name = 'master/department_edit.html'
-    dep_obj = Department.objects.get(department_id=pk)
+    try:
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Department not found.', 'alert-danger')
+        return redirect('department_list')
+    try:
+        dep_obj = Department.objects.get(department_id=pk)
+    except Department.DoesNotExist:
+        messages.error(request, 'Department not found.', 'alert-danger')
+        return redirect('department_list')
     form = DepartmentForm(instance=dep_obj)
     context = {'form': form, 'dep_obj': dep_obj}
     if request.method == 'POST':
@@ -126,7 +137,7 @@ def department_edit(request, pk):
             return redirect('department_list')
         else:
             print(form.errors)
-            messages.success(request, 'Data is not valid.', 'alert-danger')
+            messages.error(request, 'Data is not valid.', 'alert-danger')
             context = {'form': form}
             return render(request, template_name, context)
     else:
@@ -152,19 +163,30 @@ def department_edit(request, pk):
 
 @login_required(login_url='adlogin')
 def department_detail(request,pk):
-     departments = get_object_or_404(Department,department_id=pk)
-     print(departments,"kkkkk")
-     context = {
+    try:
+       
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Invalid department ID.', 'alert-danger')
+        return redirect('department_list')
+
+    try:
+        departments = Department.objects.get(department_id=pk)
+    except departments.DoesNotExist:
+        messages.error(request, 'Department not found.', 'alert-danger')
+        return redirect('department_list')
+    context = {
         'departments': departments
     }
     
-     return render(request, 'master/department_detail.html', context)
+    return render(request, 'master/department_detail.html', context)
 
 @login_required(login_url='adlogin')
 def department_delete(request, pk):
     department = Department.objects.get(department_id=pk)
     
     department.delete()
+    messages.success(request, 'Department Deleted Successfully', 'alert-success')
     return redirect('department_list')
 
 @login_required(login_url='adlogin')
@@ -183,7 +205,7 @@ def designation_add(request):
             data.created_by =User.objects.get(id=request.user.id)
             data.save()
            
-          
+            messages.success(request, 'Designation Successfully Updated.', 'alert-success')
             return redirect('designation_list')
             
         else:
@@ -200,7 +222,16 @@ def designation_add(request):
 @login_required(login_url='adlogin')   
 def designation_edit(request, pk):
     template_name = 'master/designation_edit.html'
-    des_obj = Designation.objects.get(designation_id=pk)
+    try:
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Designation not found.', 'alert-danger')
+        return redirect('designation_list')
+    try:
+        des_obj = Designation.objects.get(designation_id=pk)
+    except des_obj.DoesNotExist:
+        messages.error(request, 'Designation not found.', 'alert-danger')
+        return redirect('designation_list')
     form = Designation_Add_Form(instance=des_obj)
     context = {'form': form, 'des_obj': des_obj}
     if request.method == 'POST':
@@ -251,21 +282,35 @@ def designation_edit(request, pk):
 
 @login_required(login_url='adlogin')
 def designation_detail(request,pk):
-     designation = get_object_or_404(Designation,designation_id=pk)
-     department_name = designation.department.department_name
-     context = {
+    try:
+       
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'designation not found.', 'alert-danger')
+        return redirect('designation_list')
+
+    try:
+         designation = get_object_or_404(Designation,designation_id=pk)
+    except designation.DoesNotExist:
+        messages.error(request, 'designation not found.', 'alert-danger')
+        return redirect('designation_list')
+    
+    department_name = designation.department.department_name
+    context = {
         'designation': designation,
         'department_name':department_name
     }
     
-     return render(request, 'master/designation_detail.html', context)
+    return render(request, 'master/designation_detail.html', context)
 
 @login_required(login_url='adlogin')
 def designation_delete(request, pk):
     designation = Designation.objects.get(designation_id=pk)
     
     designation.delete()
+    messages.success(request, 'Designation Deleted Successfully', 'alert-success')
     return redirect('designation_list')
+
 @login_required(login_url='adlogin')
 def location_add(request):
     form = LocationForm
@@ -281,7 +326,7 @@ def location_add(request):
             data = form.save()
             data.created_by =User.objects.get(id=request.user.id)
             data.save()
-           
+            messages.success(request, 'Location Added Successfully', 'alert-success')
           
             return redirect('location_list')
             
@@ -315,18 +360,41 @@ def location_add(request):
 
 @login_required(login_url='adlogin')
 def location_detail(request,pk):
-     location = get_object_or_404(Location,location_id=pk)
+    try:
+       
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Location not found.', 'alert-danger')
+        return redirect('location_list')
+
+    try:
+         location = get_object_or_404(Location,location_id=pk)
+    except location.DoesNotExist:
+        messages.error(request, 'Location not found.', 'alert-danger')
+        return redirect('location_list')
     
-     context = {
+    
+    
+    context = {
         'location': location
     }
     
-     return render(request, 'master/location_detail.html', context)
+    return render(request, 'master/location_detail.html', context)
 
 @login_required(login_url='adlogin')
 def location_edit(request, pk):
     template_name = 'master/location_edit.html'
-    loc_obj = Location.objects.get(location_id=pk)
+    try:
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Location not found.', 'alert-danger')
+        return redirect('location_list')
+    try:
+        loc_obj = Location.objects.get(location_id=pk)
+    except loc_obj.DoesNotExist:
+        messages.error(request, 'Location not found.', 'alert-danger')
+        return redirect('location_list')
+    
     form = LocationForm(instance=loc_obj)
     context = {'form': form, 'loc_obj': loc_obj}
     if request.method == 'POST':
@@ -350,6 +418,7 @@ def location_delete(request, pk):
     location = Location.objects.get(location_id=pk)
     
     location.delete()
+    messages.success(request, 'Location Deleted Successfully', 'alert-success')
     return redirect('location_list')
 
 @login_required(login_url='adlogin')
@@ -374,7 +443,7 @@ def employee_add(request):
                 skill = skill_form.save(commit=False)
                 skill.employee = data
                 skill.save()
-          
+            messages.success(request, 'Employee Added Successfully', 'alert-success')
             return redirect('employee_list')
             
         else:
@@ -439,10 +508,17 @@ def designations(request):
 @login_required(login_url='adlogin')
 def employee_edit(request, pk):
     template_name = 'master/employee_edit.html'
-    emp_obj = get_object_or_404(Employee, employee_id=pk)
-    related_model = get_object_or_404(Skill, employee_id=emp_obj)
-
-    
+    try:
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'Employee not found.', 'alert-danger')
+        return redirect('employee_list')
+    try:
+        emp_obj = get_object_or_404(Employee, employee_id=pk)
+    except emp_obj.DoesNotExist:
+        messages.error(request, 'Employee not found.', 'alert-danger')
+        return redirect('employee_list')
+   
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=emp_obj)
         formset = SkillFormSet(request.POST, queryset=Skill.objects.filter(employee=emp_obj))
@@ -462,8 +538,7 @@ def employee_edit(request, pk):
             messages.success(request, 'Employee Successfully Updated.', 'alert-success')
             return redirect('employee_list')
         else:
-            print(form.errors,"kkkk")
-            print(formset.errors,"11111111111")
+          
             messages.error(request, 'Data is not valid.', 'alert-danger')
     else:
         form = EmployeeForm(instance=emp_obj)
@@ -476,13 +551,26 @@ def employee_edit(request, pk):
 
 @login_required(login_url='adlogin')
 def employee_detail(request,pk):
-     employee = get_object_or_404(Employee,employee_id=pk)
-     department=employee.department.department_name
-     designation=employee.designation.designation_name
-     location=employee.location.location_name
-     skills = Skill.objects.filter(employee=employee)
+     
+    try:
+       
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'employee not found.', 'alert-danger')
+        return redirect('employee_list')
+
+    try:
+         employee = get_object_or_404(Employee,employee_id=pk)
+    except employee.DoesNotExist:
+        messages.error(request, 'employee not found.', 'alert-danger')
+        return redirect('employee_list')
     
-     context = {
+    department=employee.department.department_name
+    designation=employee.designation.designation_name
+    location=employee.location.location_name
+    skills = Skill.objects.filter(employee=employee)
+    
+    context = {
         
         'employee': employee,
         'department':department,
@@ -491,13 +579,14 @@ def employee_detail(request,pk):
         'skills': skills,
     }
     
-     return render(request, 'master/employee_detail.html', context)
+    return render(request, 'master/employee_detail.html', context)
    
 @login_required(login_url='adlogin')    
 def employee_delete(request, pk):
     employee = Employee.objects.get(employee_id=pk)
     
     employee.delete()
+    messages.success(request, 'Employee Deleted Successfully', 'alert-success')
     return redirect('employee_list')
 
 
@@ -518,10 +607,10 @@ def user_add(request):
             data.password = passw
            
             data.save()
-
-            return redirect('employee_list')
+            messages.success(request, 'User Added Successfully', 'alert-success')
+            return redirect('user_list')
         else:
-           
+            messages.error(request, 'Data is not valid.', 'alert-danger')
             context = {'form': form,}
             return render(request, template_name, context)
     else:
@@ -550,18 +639,41 @@ def user_list(request):
 
 @login_required(login_url='adlogin')
 def user_detail(request,pk):
-     user = get_object_or_404(User,id=pk)
+    try:
+       
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'user not found.', 'alert-danger')
+        return redirect('user_list')
+
+    try:
+         user = get_object_or_404(User,id=pk)
+    except user.DoesNotExist:
+        messages.error(request, 'user not found.', 'alert-danger')
+        return redirect('user_list')
+     
     
-     context = {
+    context = {
         'user': user
     }
     
-     return render(request, 'accounts/user_detail.html', context)
+    return render(request, 'accounts/user_detail.html', context)
 
 
 def user_edit(request, pk):
     template_name = 'accounts/user_edit.html'
-    user_obj = User.objects.get(id=pk)
+    try:
+        uuid_obj = uuid.UUID(pk)
+    except ValueError:
+        messages.error(request, 'user not found.', 'alert-danger')
+        return redirect('user_list')
+    try:
+        user_obj = User.objects.get(id=pk)
+    except user_obj.DoesNotExist:
+        messages.error(request, 'user not found.', 'alert-danger')
+        return redirect('user_list')
+    
+    
    
     form = User_Edit_Form(instance=user_obj)
    
@@ -573,12 +685,13 @@ def user_edit(request, pk):
             data = form.save(commit=False)
            
             data.save()
-           
+            messages.success(request, 'User Updated Successfully', 'alert-success')
             return redirect('user_list')
         else:
-           
+            
             context = {'form': form,}
             print(form.errors)
+            messages.error(request, 'Data is not valid.', 'alert-danger')
             return render(request, template_name, context)
     else:
         return render(request, template_name, context)
@@ -590,6 +703,7 @@ def user_delete(request, pk):
     user = User.objects.get(id=pk)
     
     user.delete()
+    messages.success(request, 'User Deleted Successfully', 'alert-success')
     return redirect('user_list')
 
 
@@ -1135,15 +1249,7 @@ def generate_employee_pdf(employee_id):
     p.setFont("Helvetica-Bold", 18)
     p.drawString(100, height - 50, "Employee Details")
 
-    # Draw a line below the heading
-  
-
-    # Add a box around the employee details section
-    # p.setStrokeColorRGB(0.2, 0.5, 0.3)
-    # p.setLineWidth(2)
-    # p.rect(50, height - 420, width - 100, 350, stroke=1, fill=0)
-
-    # Add employee details with a slightly larger font for labels
+ 
     p.setFont("Helvetica-Bold", 12)
     p.drawString(70, height - 90, "Employee Name:")
     p.drawString(70, height - 110, "Employee Number:")

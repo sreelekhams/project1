@@ -1,6 +1,7 @@
 from django import forms
 from .models import Department,Designation,Location,Employee,Skill,User
 from django.forms import modelformset_factory
+from master.models import *
 
 class DepartmentForm(forms.ModelForm):
     class Meta:
@@ -105,3 +106,28 @@ class User_Edit_Form(forms.ModelForm):
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
+
+
+class AudioForm(forms.ModelForm):
+    class Meta:
+        model = Audio
+        fields = ['audio_file']
+        widgets = {
+            'audio_file': forms.ClearableFileInput(attrs={
+                'class': 'form-control-file',
+                'accept': 'audio/*',
+                'id': 'audio-input',
+            }),
+        }
+
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = Image
+        fields = ['image_file']
+        widgets = {
+            'image_file': forms.ClearableFileInput(attrs={
+                'class': 'form-control-file',
+                'accept': 'image/*',
+                'id': 'image-input',
+            }),
+        }

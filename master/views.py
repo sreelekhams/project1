@@ -1340,3 +1340,28 @@ def send_pdf(request):
 
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+
+def record_audio(request):
+    if request.method == 'POST':
+        form = AudioForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Audio recorded Successfully.', 'alert-success')
+            return redirect('indexpage')
+    else:
+        form = AudioForm()
+    return render(request, 'master/record_audio.html', {'form': form})
+
+def capture_image(request):
+    if request.method == 'POST':
+        form = ImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Image Captured Successfully.', 'alert-success')
+            return redirect('indexpage')
+    else:
+        form = ImageForm()
+    return render(request, 'master/capture_image.html', {'form': form})
+

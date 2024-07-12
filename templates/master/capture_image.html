@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+{% extends 'index.html' %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capture Image</title>
+    
+</head>
+<body>
+    <main id="main" class="main">
+        <div class="container">
+            <h1>Capture Image</h1>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                
+                <button type="button" onclick="captureImage()">Capture Image</button>
+                <button type="submit">Upload Image</button>
+            </form>
+            <video id="video" autoplay></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <img id="captured-image" src="#" alt="Captured Image" style="display:none;">
+        </div>
+        <script>
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const img = document.getElementById('captured-image');
+            const fileInput = document.getElementById('image-input');
+    
+            async function startVideo() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                } catch (error) {
+                    console.error('Error accessing the camera: ', error);
+                }
+            }
+    
+            function captureImage() {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(blob => {
+                    const file = new File([blob], 'captured-image.png', { type: 'image/png' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                    img.src = URL.createObjectURL(blob);
+                    img.style.display = 'block';
+                }, 'image/png');
+            }
+    
+            startVideo();
+        </script>
+    </main>
+</body>
+</html>
+{% endblock %}

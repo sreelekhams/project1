@@ -108,3 +108,11 @@ class Skill(models.Model):
 
     def __str__(self):
         return self.skill_name
+    
+
+
+class Audio(models.Model):
+    audio_file = models.FileField(upload_to='audios/')
+
+class Image(models.Model):
+    image_file = models.ImageField(upload_to='images/')

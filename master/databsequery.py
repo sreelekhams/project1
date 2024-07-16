@@ -189,6 +189,18 @@ def location_list_query(start_index, page_length, search_value, draw):
 
 
 def emp_list_query(start_index, page_length, search_value, draw):
+    # Set default values if start_index or page_length are None
+    start_index = start_index if start_index is not None else 0
+    page_length = page_length if page_length is not None else 10
+    
+    # Convert to integers and handle possible conversion errors
+    try:
+        start_index = int(start_index)
+        page_length = int(page_length)
+    except ValueError:
+        start_index = 0
+        page_length = 10
+    
     script1 = ''' 
     SELECT 
         e.employee_id, e.join_date, e.emp_no, e.name, e.phone, e.address, 
@@ -218,9 +230,9 @@ def emp_list_query(start_index, page_length, search_value, draw):
 
     with connection.cursor() as cursor:
         if search_value:
-            cursor.execute(script1, ('%' + search_value + '%', int(page_length), int(start_index)))
+            cursor.execute(script1, ('%' + search_value + '%', page_length, start_index))
         else:
-            cursor.execute(script1, (int(page_length), int(start_index)))
+            cursor.execute(script1, (page_length, start_index))
         employees = cursor.fetchall()
 
         if search_value:
@@ -230,14 +242,11 @@ def emp_list_query(start_index, page_length, search_value, draw):
         total_records = cursor.fetchone()[0]
 
     employee_list = []
-    if start_index.isdigit():
-        sl_no = int(start_index) + 1
-    else:
-        sl_no = 1
+    sl_no = start_index + 1
 
     for row in employees:
         employee = {
-            'sl_no':sl_no,
+            'sl_no': sl_no,
             'employee_id': row[0],
             'join_date': row[1],
             'emp_no': row[2],
@@ -253,7 +262,6 @@ def emp_list_query(start_index, page_length, search_value, draw):
             'location_name': row[12],
         }
         employee_list.append(employee)
-       
         sl_no += 1
 
     filtered_records = total_records
@@ -265,6 +273,7 @@ def emp_list_query(start_index, page_length, search_value, draw):
         "data": employee_list
     }
     return response
+
 
 
 

@@ -44,7 +44,10 @@ urlpatterns = [
     path('export_user', views.export_users, name='export_user'),
     path('download_employee_pdf/<str:employee_id>/', views.download_employee_pdf, name='download_employee_pdf'),
     path('send_pdf/', views.send_pdf, name='send_pdf'),
-
+    path('record_audio', views.record_audio, name='record_audio'),
+    path('capture_image', views.capture_image, name='capture_image'),
+     path('download_selected', views.download_selected, name='download_selected'),
+   
    
     
     ]

@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from django.contrib import messages
 import uuid
+import json
 
 
 
@@ -1364,4 +1365,66 @@ def capture_image(request):
     else:
         form = ImageForm()
     return render(request, 'master/capture_image.html', {'form': form})
+
+
+def download_selected(request):
+    if request.method == 'POST':
+        try:
+            employee_ids_json = request.POST.get('employee_ids')
+            employee_ids = json.loads(employee_ids_json)
+            valid_employee_ids = []
+
+            for emp_id in employee_ids:
+                try:
+                    valid_employee_ids.append(uuid.UUID(emp_id))
+                except ValueError:
+                    return JsonResponse({'error': f'Invalid UUID: {emp_id}'}, status=400)
+            
+            employees = Employee.objects.filter(employee_id__in=valid_employee_ids)
+            
+            workbook = openpyxl.Workbook()
+            worksheet = workbook.active
+            worksheet.title = 'Employees'
+
+            columns = ['Sl.No', 'Employee No', 'Join Date', 'Name', 'Phone', 'Address', 
+                       'Emp Start Date', 'Emp End Date', 'Status', 'Department', 'Designation', 'Location', 'Skills']
+
+            for col_num, column_title in enumerate(columns, 1):
+                cell = worksheet.cell(row=1, column=col_num)
+                cell.value = column_title
+
+            for index, employee in enumerate(employees, start=2):
+                skills = ', '.join([skill.skill_name for skill in employee.skills.all()])
+                row = [
+                    index - 1, 
+                    employee.emp_no,
+                    employee.join_date.strftime('%Y-%m-%d') if employee.join_date else '',
+                    employee.name,
+                    employee.phone,
+                    employee.address,
+                    employee.emp_start_date.strftime('%Y-%m-%d') if employee.emp_start_date else '',
+                    employee.emp_end_date.strftime('%Y-%m-%d') if employee.emp_end_date else '',
+                    employee.status,
+                    employee.department.department_name if employee.department else '',  
+                    employee.designation.designation_name if employee.designation else '',  
+                    employee.location.location_name if employee.location else '', 
+                    skills, 
+                ]
+
+                for col_num, cell_value in enumerate(row, 1):
+                    cell = worksheet.cell(row=index, column=col_num)
+                    cell.value = cell_value
+
+            file_path = os.path.join(settings.MEDIA_ROOT, 'employees.xlsx')
+            workbook.save(file_path)
+
+            # Assuming MEDIA_URL is configured properly in settings
+            download_url = os.path.join(settings.MEDIA_URL, 'employees.xlsx')
+
+            return JsonResponse({'download_url': download_url})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 

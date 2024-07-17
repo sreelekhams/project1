@@ -1370,18 +1370,45 @@ def capture_image(request):
 def download_selected(request):
     if request.method == 'POST':
         try:
+            import ast
+
             employee_ids_json = request.POST.get('employee_ids')
             employee_ids = json.loads(employee_ids_json)
+            print(employee_ids)
+            select_all = request.POST.get('select_all') == 'true'
+            unselect = request.POST.get('unselect')
+            alllist=request.POST.get('alllist')
+            print(alllist,"alllist")
+           
+            
+           
             valid_employee_ids = []
+
 
             for emp_id in employee_ids:
                 try:
                     valid_employee_ids.append(uuid.UUID(emp_id))
                 except ValueError:
                     return JsonResponse({'error': f'Invalid UUID: {emp_id}'}, status=400)
-            
-            employees = Employee.objects.filter(employee_id__in=valid_employee_ids)
-            
+            if len(ast.literal_eval(alllist))>0:
+                
+                employee_list = []
+                unselect_id=json.loads(unselect)
+                print(unselect_id,'unselect_id')
+                for emp_id in unselect_id:
+                    try:
+                        employee_list.append(uuid.UUID(emp_id))
+                    except ValueError:
+                        return JsonResponse({'error': f'Invalid UUID: {emp_id}'}, status=400)
+                employees = Employee.objects.all().exclude(employee_id__in=employee_list)
+                print(employees,'employees')
+            elif select_all:
+               
+                employees = Employee.objects.all()
+            else:
+               
+                employees = Employee.objects.filter(employee_id__in=valid_employee_ids)
+                
             workbook = openpyxl.Workbook()
             worksheet = workbook.active
             worksheet.title = 'Employees'
@@ -1392,7 +1419,7 @@ def download_selected(request):
             for col_num, column_title in enumerate(columns, 1):
                 cell = worksheet.cell(row=1, column=col_num)
                 cell.value = column_title
-
+            print(employees,'&&&&&')
             for index, employee in enumerate(employees, start=2):
                 skills = ', '.join([skill.skill_name for skill in employee.skills.all()])
                 row = [
@@ -1410,7 +1437,7 @@ def download_selected(request):
                     employee.location.location_name if employee.location else '', 
                     skills, 
                 ]
-
+                print(row,'rowww')
                 for col_num, cell_value in enumerate(row, 1):
                     cell = worksheet.cell(row=index, column=col_num)
                     cell.value = cell_value

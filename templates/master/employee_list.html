@@ -76,6 +76,7 @@
                                 </tbody>
                             </table>
                         </div>
+                       
                         <!-- Add select all checkbox and download button -->
                         <div class="card-footer">
                             <div class="d-flex justify-content-between">
@@ -83,6 +84,7 @@
                                     
                                      
                                     <button type="button" class="btn btn-primary" id="download_selected">Download Selected</button>
+                                    <span id="rowCount">0 employees selected</span> <!-- Added line for count display -->
                                 </div>
                             </div>
                         </div>
@@ -148,60 +150,53 @@
   
     <script>
         $(document).ready(function () {
-            let selectedEmployeeIds = new Set(); 
-
-            LoadTable();
-
-
-        
-            // Handle select all checkbox in table header
-        
-            $('#select_all').on('click', function () {
-                var isChecked = $(this).is(':checked');
-                var table = $('#empTable').DataTable();
+            var selectedEmployeeIds = new Set();
+            var unselect=new Set();
+            var exclude=new Set();
+            var alllist=new Set();
+            var new_total= [];
+            var new_list_count=[];
+           
             
-                if (isChecked) {
+            function updateSelectedCount() {
+                var selectAllChecked = $('#select_all').is(':checked');
+                if (selectAllChecked){
+                   
+                    console.log(new_total[0],"new_total")
+                    new_list_count.push(new_total[0])
+                   
+                    $('#rowCount').text(new_total[0] + ' employees selected');
+                }
+                else{
                     
-                    selectedEmployeeIds = new Set();
-                    console.log('ll',table.row.data)
-                    table.rows().data().each(function (data) {
-                        
-                        var employeeId = data.employee_id;
-                        console.log(employeeId)
-                        selectedEmployeeIds.add(employeeId);
-                        $('input[data-id="' + employeeId + '"]').prop('checked', true);
-                    });
-                } else {
-                    console.log("lllllkj")
-                    selectedEmployeeIds = new Set();
-                    $('input.emp_checkbox').prop('checked', false);
-                }
-            });
+                    if (new_list_count.length !=0){
+                        var new_count=new_list_count[0]-unselect.size
+                        $('#rowCount').text(new_count + ' employees selected');}  
+                    
+                    else{
+                        console.log(new_total[0]-unselect.size,"unselect")
+                        $('#rowCount').text(selectedEmployeeIds.size + ' employees selected');
+                    }
+            }
+        }
+    
 
-            // Handle individual checkbox change
-            $('#empTable').on('change', '.emp_checkbox', function () {
-                var employeeId = $(this).data('id');
-               
-                if ($(this).is(':checked')) {
-                    selectedEmployeeIds.add(employeeId);
-                } else {
-                    selectedEmployeeIds.delete(employeeId);
-                }
-            });
-
-            // Handle download selected button
+        
             $('#download_selected').click(function () {
                 if (selectedEmployeeIds.size === 0) {
                     alert('No employees selected');
                     return;
                 }
-
+                var selectAllChecked = $('#select_all').is(':checked');
                 $.ajax({
                     type: 'POST',
-                    url: '{% url "download_selected" %}', // Adjust this URL if necessary
+                    url: '{% url "download_selected" %}',
                     data: {
-                        'employee_ids': JSON.stringify(Array.from(selectedEmployeeIds)), // Convert the set to JSON string
-                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        'employee_ids': JSON.stringify(Array.from(selectedEmployeeIds)), 
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                        'select_all': selectAllChecked,
+                        'unselect':JSON.stringify(Array.from(unselect)), 
+                        'alllist':JSON.stringify(Array.from(alllist)),
                     },
                     success: function (response) {
                         window.location.href = response.download_url;
@@ -219,10 +214,11 @@
                 if ($.fn.DataTable.isDataTable('#empTable')) {
                     $('#empTable').DataTable().clear().destroy();
                 }
-
+              
                 $('#empTable').DataTable({
+                   
                     "serverSide": true,
-                    "aLengthMenu": [[10, 25, 50], [10, 25, 50]],
+                    "aLengthMenu":[[10, 25, 50], [10, 25, 50]],
                     "paging": true,
                     "ordering": false,
                     "pageLength": 10,
@@ -241,11 +237,16 @@
                             $("#myTable tbody").empty().append('<tr class="odd"><td valign="top" colspan="16" class="dataTables_empty">ERROR</td></tr>');
                         }
                     },
+                  
                     "columns": [
                         {
                             "data": function (row, type, val, meta) {
+                               
                                 var checked = $('#select_all').prop('checked') ? 'checked' : '';
+                                console.log(checked,"checked")
                                 return '<input type="checkbox" class="emp_checkbox" data-id="' + row.employee_id + '" ' + checked + '>';
+                               
+                               
                             },
                             "orderable": false,
                         },
@@ -268,10 +269,78 @@
                     ],
                     "drawCallback": function () {
                         $('#empTable_paginate ul.pagination').addClass("pagination-rounded");
+                        var api = this.api();
+                        var total = api.ajax.json().recordsTotal;
+                        new_total.push(total)
+                        var allChecked = true;
+                        var table = $('#empTable').DataTable();
+                        table.rows().every(function (rowIdx, tableLoop, rowLoop) {
+                           
+                            var data = this.data();
+                            if (!selectedEmployeeIds.has(data.employee_id)) {
+                                allChecked = false;
+                                return false;  
+                            }
+                        });
+                        $('#select_all').prop('checked', allChecked);
+                        updateSelectedCount(); // Update count on table redraw
                     }
                 });
             }
 
+            function updateSelectedIds() {
+                // Update hidden input value with selectedEmployeeIds
+                $('#selected_employee_ids').val(JSON.stringify(Array.from(selectedEmployeeIds)));
+               
+            }
+
+            $('#select_all').on('click', function () {
+                var isChecked = $(this).is(':checked');
+                var table = $('#empTable').DataTable();
+            
+                if (isChecked) {
+                    // Add all employee IDs to selectedEmployeeIds
+                    table.rows({ search: 'applied' }).every(function (rowIdx, tableLoop, rowLoop) {
+                        var data = this.data();
+                       
+                        console.log(alllist,"alllist")
+                        alllist.add(1)
+                        selectedEmployeeIds.add(data.employee_id);
+                    });
+                    $('input.emp_checkbox').prop('checked', true);
+                } else {
+                    // Clear selectedEmployeeIds
+                    table.rows({ search: 'applied' }).every(function (rowIdx, tableLoop, rowLoop) {
+                        var data = this.data();
+                        selectedEmployeeIds.delete(data.employee_id);
+                    });
+                    $('input.emp_checkbox').prop('checked', false);
+                }
+                updateSelectedIds();
+                updateSelectedCount(); 
+            });
+            
+            
+            // Handle individual row checkboxes
+            $(document).on('change', 'input.emp_checkbox', function () {
+                var employeeId = $(this).data('id');
+                console.log(employeeId,"employeeId")
+                if ($(this).is(':checked')) {
+                    selectedEmployeeIds.add(employeeId);
+                } else {
+                    selectedEmployeeIds.delete(employeeId);
+                    $('#select_all').prop('checked', false); 
+                    unselect.add(employeeId) 
+                    console.log(unselect,"unselect")// Uncheck "Select All" if any checkbox is unchecked
+                }
+                updateSelectedCount(); // Update count on individual checkbox change
+            });
+
+            $(document).ready(function() {
+                LoadTable();
+                updateSelectedIds();
+                updateSelectedCount(); // Initial count update
+            });
             // Handle email modal
             $('#emailModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
